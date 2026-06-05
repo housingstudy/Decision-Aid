@@ -1,0 +1,991 @@
+import React, { useState, useCallback, useMemo } from "react";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   i18n
+   ═══════════════════════════════════════════════════════════════════════ */
+const T = {
+  en: {
+    title: "AccessPath Navigator", subtitle: "Home Accessibility Toolkit",
+    tagline: "Navigate your housing decision with confidence", langSwitch: "Français",
+    next: "Continue", back: "Back", step: "Step", of: "of",
+    person1: "Person 1", person2: "Person 2", yes: "Yes", no: "No", unsure: "Not sure",
+
+    welcomeTitle: "Making Housing Decisions Easier",
+    welcomeBody: "This tool helps you think through an important housing decision — whether to adapt your current home, move somewhere new, or explore other options. It's built on two trusted frameworks used in Canada and internationally: the Ottawa Personal Decision Guide and the Pugh weighted comparison method.",
+    welcomeHow: "How it works:",
+    welcomeSteps: [
+      "Clarify your decision — understand what you're facing and what matters to you",
+      "Compare your options — see how your choices measure up based on your priorities",
+      "Review your results — get a clear summary you can share with family, an occupational therapist, or an advisor",
+    ],
+    welcomeTime: "Takes about 15–20 minutes. Your information stays private — nothing is stored.",
+    welcomeStart: "Start from the Beginning",
+    welcomeSkip: "I've already decided — skip to comparing options",
+
+    stage1: "Clarify Your Decision", stage2: "Compare Your Options",
+
+    // 1.1 — Options & Context
+    s1_1_title: "What housing options are you considering?",
+    s1_1_purpose: "Let's start with the options on your mind. Name up to 4 — these will be compared later using a structured method.",
+    optionPh: "e.g., Adapt my home, Move to a condo...",
+    addOption: "+ Add another option",
+    suggestions: ["Adapt my current home", "Move to a smaller home or condo", "Move to accessible housing", "Move to assisted living", "Move in with family", "Move to a different community"],
+    commonOpts: "Common options:",
+    reasonsQ: "What are your reasons for considering a change?",
+    reasonsPh: "e.g., I had a fall last month, my mobility is changing, the house needs repairs...",
+    reasonSuggestions: ["My health or mobility has changed", "I had a fall or hospital stay", "Someone suggested I think about my housing", "My home needs repairs", "I'm planning ahead for the future", "I'm helping a family member"],
+    commonReasons: "Common reasons:",
+    timelineQ: "When do you need to make a choice?",
+    timelines: ["Within weeks", "Within a few months", "Within a year", "No specific timeline"],
+    provinceQ: "What province or territory do you live in?",
+    provinces: ["BC","AB","SK","MB","ON","QC","NB","NS","PE","NL","YT","NT","NU"],
+    provinceFull: ["British Columbia","Alberta","Saskatchewan","Manitoba","Ontario","Quebec","New Brunswick","Nova Scotia","Prince Edward Island","Newfoundland & Labrador","Yukon","Northwest Territories","Nunavut"],
+    stageQ: "How far along are you with making a choice?",
+    stages: ["Not thought about it yet", "Thinking about it", "Close to choosing", "Already made a choice"],
+
+    // 1.2 — Disability & Tenure (DFG-informed)
+    s1_2_title: "About you and your home",
+    s1_2_purpose: "These questions help us understand your situation and connect you with the right programs. Answer what you can — you can skip questions you're not sure about.",
+    tenureQ: "What is your housing situation?",
+    tenures: ["Owner occupier", "Tenant / renter", "Living in band-owned or social housing", "Living with family (not the homeowner)", "Other"],
+    disabilityQ: "Does the person needing home changes have any of the following?",
+    disabilityNote: "Select all that apply. This helps identify relevant funding programs.",
+    disabilities: [
+      "Substantial physical disability (mobility, dexterity, strength)",
+      "Sight, hearing, or speech substantially impaired",
+      "Mental health condition or cognitive impairment",
+      "None of the above",
+    ],
+    conditionQ: "Is the condition likely to affect them for at least one year?",
+    conditionOpts: ["Yes — it is long-term or permanent", "Yes — it's likely to last at least a year", "No — it is expected to improve within a year", "Not sure"],
+    progressionQ: "Over the next year, is the condition likely to:",
+    progressions: ["Stay about the same", "Gradually decline", "Improve", "Fluctuate (better and worse periods)", "Not sure"],
+    intentionQ: "How long do you intend to live in this home?",
+    intentions: ["Less than 1 year", "1 to 5 years", "More than 5 years", "As long as possible", "Not sure"],
+    ownerPermQ: "If you rent or don't own the home, has the owner given permission for modifications?",
+    ownerPerms: ["Yes", "No", "Not yet asked", "Not applicable — I own the home"],
+
+    // 1.3 — Who's Involved
+    s1_3_title: "Who else is involved in this decision?",
+    s1_3_purpose: "Housing decisions often affect and involve other people. Understanding who's part of this can help.",
+    involvedQ: "Select everyone who is involved:",
+    involved: ["Partner / spouse", "Adult children", "Other family members", "Occupational therapist or healthcare provider", "Social worker or case manager", "Landlord or housing provider", "Band council or housing authority", "No one else — this is my decision alone"],
+    pressureQ: "Is anyone putting pressure on you to choose a particular option?",
+    pressures: ["Yes — someone wants me to move", "Yes — someone wants me to stay", "No — I don't feel pressured", "I'm not sure"],
+    pressureFollowup: "If you feel pressured, that's important to name. This tool can help you clarify your own priorities so you can have a more grounded conversation with others.",
+    forTwoQ: "Would you like a second person to complete this tool alongside you?",
+    forTwoDesc: "If someone else is part of this decision (a partner, adult child, or caregiver), they can rate the same factors separately. You'll see a side-by-side comparison of where you agree and where you see things differently.",
+    forTwoYes: "Yes — a second person will also complete this",
+    forTwoNo: "No — just me",
+
+    // 1.4 — Values
+    s1_4_title: "What matters most to you?",
+    s1_4_purpose: "Before comparing options, take a moment to reflect on what's important in your life. Rate each from 0 (not important at all) to 5 (extremely important). These will shape how your options are compared.",
+    notImportant: "0 — Not important", veryImportant: "5 — Extremely important",
+    catConnections: "Relationships & Connections", catMoney: "Money & Security",
+    catHome: "Home & Daily Life", catFuture: "Independence & Future",
+    values: [
+      "Staying close to people I care about", "Keeping my social life and community",
+      "Easy access to services I rely on (doctor, pharmacy, transit)",
+      "Keeping my housing costs manageable", "Protecting the financial value of my home",
+      "Being able to manage my home independently", "Feeling safe in my home",
+      "Having a home I feel proud of and comfortable in",
+      "Avoiding the stress and disruption of a major change",
+      "Making my own decisions about how I live",
+      "Having a home that will still work as my needs change",
+      "Maintaining cultural or spiritual connections to my community",
+    ],
+
+    // 1.5 — SURE
+    s1_5_title: "Do you have what you need to decide?",
+    s1_5_purpose: "These four questions (adapted from the SURE test) help identify what might make this decision easier. There are no wrong answers.",
+    sureQs: [
+      "Do you feel you know enough about the options available to you?",
+      "Are you clear about which benefits and risks matter most to you?",
+      "Do you have enough support and advice to make a choice?",
+      "Do you feel sure about the best choice for you?",
+    ],
+    sureHelp: [
+      { title: "Learn more about your options", tips: ["Ask your doctor or occupational therapist about options for your situation", "Contact your provincial housing authority to learn about available programs", "Talk to others who have faced a similar decision", "Visit homeaccessibilitytoolkit.com for resources on home modifications"] },
+      { title: "Clarify what matters most", tips: ["Review the values you rated in the previous step — which scored highest?", "Talk to people who have experienced both adapting and moving", "Think about what you'd regret most: staying in a home that doesn't work, or leaving a home you love?", "Consider both short-term disruption and long-term benefit"] },
+      { title: "Find support for your decision", tips: ["Ask for a referral to an occupational therapist for a home assessment", "Contact a local disability or seniors' organization for guidance", "Share this tool with someone you trust and complete it together (For Two mode)", "If you feel pressured, a counsellor or social worker can help you navigate that"] },
+      { title: "It's okay not to feel sure yet", tips: ["The comparison in Stage 2 is specifically designed to help with this", "Sometimes seeing the numbers helps make the right choice clearer", "You don't have to decide today — use the results to guide conversations", "You can come back and redo this tool anytime as your thinking evolves"] },
+    ],
+    sureGood: "You seem well-prepared. Let's compare your options.",
+    sureMid: "You're getting there. The comparison ahead can help clarify things further.",
+    sureLow: "That's completely okay. Many people start here. The next steps are designed to help you work through exactly this.",
+
+    // 1.6 — OPDG Summary
+    s1_6_title: "Summary: What You've Told Us",
+    s1_6_purpose: "Here's a recap of everything you've shared. Review this before moving into the structured comparison.",
+    summaryReasons: "Your reasons:", summaryTimeline: "Timeline:", summaryOptions: "Options you're considering:",
+    summaryProvince: "Province / Territory:", summaryInvolved: "People involved:",
+    summaryPressure: "Pressure:", summaryTopValues: "What matters most to you:",
+    summaryReadiness: "Readiness to decide:", summaryTenure: "Housing situation:",
+    summaryDisability: "Disability:", summaryDuration: "Condition duration:",
+    summaryIntention: "Intention to stay:", summaryPermission: "Owner permission:",
+    readinessLabels: ["Not yet explored", "Getting there", "Well-prepared"],
+    summaryNext: "Next, you'll explore the pros and cons of each option, then move into a structured comparison based on your priorities.",
+    continueToCompare: "Continue to Comparing Options",
+
+    // 2.0 — Pros & Cons
+    s2_0_title: "Explore the Pros and Cons of Each Option",
+    s2_0_purpose: "For each option, list the reasons in favour and the reasons against. This helps you think through each option before the structured comparison.",
+    prosLabel: "Reasons to choose this option (benefits, advantages, pros):",
+    consLabel: "Reasons to avoid this option (risks, disadvantages, cons):",
+    prosPh: "What's good about this option?", consPh: "What concerns you about this option?",
+    alsoConsider: "Also consider: staying in your current home without making any changes",
+    stayProsLabel: "What's good about staying as you are without making any changes?",
+    stayConsLabel: "What concerns you about staying as you are without making any changes?",
+
+    // 2.1 — Priorities
+    s2_1_title: "How important is each factor to your decision?",
+    s2_1_purpose: "These sliders are pre-set from the values you rated earlier. Adjust anything that feels different when you think specifically about this housing decision. 0 = not important, 10 = most important.",
+    notImp: "0", veryImp: "10",
+    factors: ["Staying close to friends & social life", "Staying close to family", "Access to shops, services & transit", "Weekly / monthly cost of living", "Equity / financial value of home", "Difficulty & stress of making a change", "Ease of maintaining and cleaning the home", "Pride & comfort in the home", "Control over how I live day to day", "Home suitability as my needs change", "Cultural & community connections", "Availability of funding support"],
+    factorCats: ["Connections","Connections","Connections","Money & Security","Money & Security","Home & Practicalities","Home & Practicalities","Home & Practicalities","Independence & Future","Independence & Future","Independence & Future","Funding"],
+    baselineNote: "All options will be compared against staying in your current home without making any changes",
+
+    // 2.2 — Rate
+    s2_2_title: "Rate Each Option Against Your Current Situation",
+    s2_2_purpose: "Think about your life in your current home right now, without any changes made. For each factor below, ask yourself: if I chose this option instead, would things get worse, stay the same, or get better compared to how they are today?",
+    ratingInstruction: "You are rating:",
+    ratingCompare: "Ask yourself: \"Compared to how things are for me RIGHT NOW in my current home, with no changes made, would this option be...\"",
+    ratings: ["Much Worse", "Worse", "About the Same", "Better", "Much Better"],
+    ratingScores: [-2, -1, 0, 1, 2],
+    ratingHint: "← worse than now (no changes) | same as now | better than now →",
+    rateAllPrompt: "Please rate all your options before viewing results.",
+    rateComplete: "✓ All factors rated",
+    rateIncomplete: "factors remaining",
+    rateNextOption: "Next: Rate",
+    ratePrevOption: "Previous:",
+
+    // 2.3 — Review
+    s2_3_title: "Review your inputs before seeing results",
+    s2_3_purpose: "Take a moment to check everything looks right. You can go back and change anything.",
+    reviewOptions: "Options you're comparing:", reviewBaseline: "Baseline: Stay in your current home without making any changes",
+    reviewTopValues: "Your top priorities:", reviewReady: "Everything look right?",
+    seeResults: "See My Results", goBackEdit: "Go back and edit",
+
+    // 2.4 — Results
+    s2_4_title: "Your Results",
+    s2_4_purpose: "Here's how your options compare, based on what matters most to you.",
+    strongest: "Based on your priorities, your strongest option is:",
+    scoreSummary: "Score Summary",
+    baseline: "Stay in current home (no changes)",
+    factorBreakdown: "Factor-by-Factor Breakdown", weight: "Wt", total: "TOTAL",
+    fundingPreview: "Funding Preview",
+    fundingPreviewDesc: "Based on your province, here's an indicative look at what adaptation funding may be available.",
+    programs: "Programs:", maxFunding: "Potential max funding:", taxCredits: "Tax credits:",
+    indicative: "These are indicative figures only. Confirm with administering organizations.",
+    prosConsReview: "Your Pros & Cons Notes",
+    forTwoTitle: "Side-by-Side: How You and Person 2 Compare",
+    forTwoDesc: "Where your values align and where they differ.",
+    agree: "Agree", disagree: "Differ", pros: "Pros", cons: "Cons",
+    stayAsIs: "Stay as you are (no changes)",
+    exportPdf: "Print / Save as PDF", startOver: "Start Over",
+    resultsPart1: "Part 1: Your Situation & Reflections",
+    resultsPart1Desc: "A summary of everything you shared about your situation, values, and initial thinking.",
+    resultsPart2: "Part 2: Structured Comparison (Pugh Analysis)",
+    resultsPart2Desc: "How your options scored when weighted against what matters most to you.",
+    disclaimer: "This tool supports reflection and conversation — it does not make decisions for you and is not professional advice. Confirm all program details with administering organizations before applying.",
+  },
+  fr: {
+    title: "AccessPath Navigateur", subtitle: "Boîte à outils d'accessibilité domiciliaire",
+    tagline: "Naviguez votre décision de logement avec confiance", langSwitch: "English",
+    next: "Continuer", back: "Retour", step: "Étape", of: "de",
+    person1: "Personne 1", person2: "Personne 2", yes: "Oui", no: "Non", unsure: "Pas sûr(e)",
+
+    welcomeTitle: "Faciliter les décisions de logement",
+    welcomeBody: "Cet outil vous aide à réfléchir à une décision importante concernant votre logement — adapter votre maison, déménager, ou explorer d'autres options. Il s'appuie sur le Guide personnel de décision d'Ottawa et la méthode de comparaison pondérée Pugh.",
+    welcomeHow: "Comment ça fonctionne :",
+    welcomeSteps: ["Clarifiez votre décision — comprenez votre situation et ce qui compte", "Comparez vos options — voyez comment vos choix se mesurent selon vos priorités", "Consultez vos résultats — obtenez un résumé clair à partager"],
+    welcomeTime: "Environ 15–20 minutes. Vos informations restent privées.", welcomeStart: "Commencer", welcomeSkip: "Passer à la comparaison",
+
+    stage1: "Clarifier votre décision", stage2: "Comparer vos options",
+
+    s1_1_title: "Quelles options de logement envisagez-vous?",
+    s1_1_purpose: "Commençons par les options auxquelles vous pensez. Nommez-en jusqu'à 4 — elles seront comparées plus tard.",
+    optionPh: "ex. : Adapter ma maison, Déménager en condo...", addOption: "+ Ajouter une option",
+    suggestions: ["Adapter ma maison actuelle", "Déménager dans un logement plus petit", "Déménager dans un logement accessible", "Déménager en résidence avec services", "Emménager avec la famille", "Déménager dans une autre communauté"],
+    commonOpts: "Options courantes :",
+    reasonsQ: "Quelles sont vos raisons d'envisager un changement?",
+    reasonsPh: "ex. : Chute récente, mobilité qui change, réparations nécessaires...",
+    reasonSuggestions: ["Ma santé ou mobilité a changé", "J'ai eu une chute ou un séjour à l'hôpital", "Quelqu'un m'a suggéré de réfléchir", "Ma maison a besoin de réparations", "Je planifie pour l'avenir", "J'aide un membre de ma famille"],
+    commonReasons: "Raisons courantes :",
+    timelineQ: "Quand devez-vous faire un choix?",
+    timelines: ["D'ici quelques semaines", "D'ici quelques mois", "D'ici un an", "Pas de délai précis"],
+    provinceQ: "Dans quelle province ou territoire habitez-vous?",
+    provinces: ["C.-B.","Alb.","Sask.","Man.","Ont.","Qc","N.-B.","N.-É.","Î.-P.-É.","T.-N.-L.","Yn","T.N.-O.","Nt"],
+    provinceFull: ["Colombie-Britannique","Alberta","Saskatchewan","Manitoba","Ontario","Québec","Nouveau-Brunswick","Nouvelle-Écosse","Île-du-Prince-Édouard","Terre-Neuve-et-Labrador","Yukon","Territoires du Nord-Ouest","Nunavut"],
+    stageQ: "Où en êtes-vous dans votre réflexion?",
+    stages: ["Je n'y ai pas encore pensé", "J'y réfléchis", "Je suis proche d'un choix", "J'ai déjà fait un choix"],
+
+    s1_2_title: "À propos de vous et de votre domicile",
+    s1_2_purpose: "Ces questions aident à comprendre votre situation et à vous orienter vers les bons programmes. Répondez à ce que vous pouvez.",
+    tenureQ: "Quelle est votre situation de logement?",
+    tenures: ["Propriétaire occupant", "Locataire", "Logement de bande ou social", "Habite avec la famille (pas propriétaire)", "Autre"],
+    disabilityQ: "La personne ayant besoin de modifications a-t-elle l'une des conditions suivantes?",
+    disabilityNote: "Sélectionnez tout ce qui s'applique. Cela aide à identifier les programmes pertinents.",
+    disabilities: ["Handicap physique substantiel (mobilité, dextérité, force)", "Vue, ouïe ou parole substantiellement altérée", "Condition de santé mentale ou déficience cognitive", "Aucune de ces conditions"],
+    conditionQ: "La condition est-elle susceptible de durer au moins un an?",
+    conditionOpts: ["Oui — c'est à long terme ou permanent", "Oui — ça durera probablement au moins un an", "Non — on s'attend à une amélioration en moins d'un an", "Pas sûr(e)"],
+    progressionQ: "Au cours de la prochaine année, la condition est-elle susceptible de :",
+    progressions: ["Rester à peu près la même", "Décliner progressivement", "S'améliorer", "Fluctuer (périodes meilleures et pires)", "Pas sûr(e)"],
+    intentionQ: "Combien de temps comptez-vous vivre dans ce domicile?",
+    intentions: ["Moins d'un an", "1 à 5 ans", "Plus de 5 ans", "Le plus longtemps possible", "Pas sûr(e)"],
+    ownerPermQ: "Si vous êtes locataire, le propriétaire a-t-il donné la permission pour des modifications?",
+    ownerPerms: ["Oui", "Non", "Pas encore demandé", "Sans objet — je suis propriétaire"],
+
+    s1_3_title: "Qui d'autre est impliqué dans cette décision?",
+    s1_3_purpose: "Les décisions de logement touchent souvent d'autres personnes.",
+    involvedQ: "Sélectionnez toutes les personnes impliquées :",
+    involved: ["Conjoint(e)", "Enfants adultes", "Autres membres de la famille", "Ergothérapeute ou professionnel de santé", "Travailleur(euse) social(e)", "Propriétaire ou fournisseur de logement", "Conseil de bande ou autorité du logement", "Personne d'autre — c'est ma décision seul(e)"],
+    pressureQ: "Quelqu'un vous met-il de la pression?",
+    pressures: ["Oui — on veut que je déménage", "Oui — on veut que je reste", "Non — pas de pression", "Pas sûr(e)"],
+    pressureFollowup: "Si vous ressentez de la pression, c'est important de le reconnaître. Cet outil peut vous aider à clarifier vos priorités.",
+    forTwoQ: "Souhaitez-vous qu'une deuxième personne complète cet outil avec vous?",
+    forTwoDesc: "Une deuxième personne peut évaluer les mêmes facteurs. Vous verrez une comparaison côte à côte.",
+    forTwoYes: "Oui — une deuxième personne participera", forTwoNo: "Non — juste moi",
+
+    s1_4_title: "Qu'est-ce qui compte le plus pour vous?",
+    s1_4_purpose: "Évaluez chaque élément de 0 (pas important) à 5 (extrêmement important).",
+    notImportant: "0 — Pas important", veryImportant: "5 — Extrêmement important",
+    catConnections: "Relations et liens", catMoney: "Argent et sécurité", catHome: "Maison et quotidien", catFuture: "Indépendance et avenir",
+    values: ["Rester proche des gens importants", "Garder ma vie sociale", "Accès aux services (médecin, pharmacie, transport)", "Coûts de logement gérables", "Valeur financière de ma maison", "Gérer ma maison de façon autonome", "Me sentir en sécurité chez moi", "Un chez-moi dont je suis fier/fière", "Éviter le stress d'un changement majeur", "Prendre mes propres décisions", "Un logement qui fonctionnera si mes besoins changent", "Liens culturels ou spirituels avec ma communauté"],
+
+    s1_5_title: "Avez-vous ce qu'il faut pour décider?",
+    s1_5_purpose: "Quatre questions adaptées du test SURE. Il n'y a pas de mauvaises réponses.",
+    sureQs: ["En savez-vous assez sur vos options?", "Savez-vous quels avantages et risques comptent le plus?", "Avez-vous assez de soutien et de conseils?", "Vous sentez-vous sûr(e) du meilleur choix?"],
+    sureHelp: [
+      { title: "En apprendre plus", tips: ["Consultez votre médecin ou ergothérapeute", "Contactez l'autorité provinciale du logement", "Parlez à d'autres personnes", "Visitez homeaccessibilitytoolkit.com"] },
+      { title: "Clarifier ce qui compte", tips: ["Revoyez vos valeurs", "Parlez à des gens qui ont vécu les deux options", "Réfléchissez à ce que vous regretteriez le plus", "Considérez le court et le long terme"] },
+      { title: "Trouver du soutien", tips: ["Demandez une référence à un ergothérapeute", "Contactez un organisme local", "Partagez cet outil avec quelqu'un", "Un travailleur social peut aider"] },
+      { title: "C'est normal", tips: ["La comparaison à l'étape 2 aide", "Voir les chiffres clarifie", "Pas besoin de décider aujourd'hui", "Vous pouvez refaire cet outil"] },
+    ],
+    sureGood: "Vous semblez bien préparé(e).", sureMid: "La comparaison peut aider.", sureLow: "C'est normal. Les prochaines étapes vous aideront.",
+
+    s1_6_title: "Résumé", s1_6_purpose: "Voici un récapitulatif avant la comparaison structurée.",
+    summaryReasons: "Vos raisons :", summaryTimeline: "Échéancier :", summaryOptions: "Options :",
+    summaryProvince: "Province :", summaryInvolved: "Personnes impliquées :", summaryPressure: "Pression :",
+    summaryTopValues: "Ce qui compte le plus :", summaryReadiness: "Préparation :",
+    summaryTenure: "Situation de logement :", summaryDisability: "Handicap :",
+    summaryDuration: "Durée de la condition :", summaryIntention: "Intention de rester :",
+    summaryPermission: "Permission du propriétaire :",
+    readinessLabels: ["Pas encore exploré", "En progression", "Bien préparé(e)"],
+    summaryNext: "Ensuite, vous explorerez les avantages et inconvénients, puis passerez à la comparaison.",
+    continueToCompare: "Continuer",
+
+    s2_0_title: "Avantages et inconvénients", s2_0_purpose: "Pour chaque option, notez les raisons pour et contre.",
+    prosLabel: "Raisons de choisir (avantages) :", consLabel: "Raisons d'éviter (inconvénients) :",
+    prosPh: "Qu'est-ce qui est bien?", consPh: "Qu'est-ce qui vous préoccupe?",
+    alsoConsider: "Aussi : rester dans votre maison actuelle sans faire aucun changement",
+    stayProsLabel: "Qu'est-ce qui est bien à rester sans changement?",
+    stayConsLabel: "Qu'est-ce qui vous préoccupe à rester sans changement?",
+
+    s2_1_title: "Importance de chaque facteur", s2_1_purpose: "Curseurs pré-réglés selon vos valeurs. Ajustez si nécessaire.",
+    notImp: "0", veryImp: "10",
+    factors: ["Proximité des amis", "Proximité de la famille", "Accès aux services", "Coût de la vie", "Valeur financière", "Stress du changement", "Facilité d'entretien", "Fierté et confort", "Contrôle quotidien", "Adéquation future", "Liens culturels", "Soutien financier"],
+    factorCats: ["Relations","Relations","Relations","Argent","Argent","Maison","Maison","Maison","Avenir","Avenir","Avenir","Financement"],
+    baselineNote: "Toutes les options seront comparées à votre situation actuelle sans aucun changement",
+
+    s2_2_title: "Évaluez chaque option", s2_2_purpose: "Pensez à votre vie actuelle dans votre maison, sans aucun changement. Si vous choisissiez cette option, les choses iraient-elles moins bien, pareilles, ou mieux?",
+    ratingInstruction: "Vous évaluez :", ratingCompare: "Demandez-vous : « Par rapport à ma situation ACTUELLE, sans aucun changement, est-ce que ce serait... »",
+    ratings: ["Bien pire", "Pire", "Pareil", "Mieux", "Bien mieux"], ratingScores: [-2, -1, 0, 1, 2],
+    ratingHint: "← pire que maintenant (sans changement) | pareil | mieux →",
+    rateAllPrompt: "Veuillez évaluer toutes vos options avant de voir les résultats.",
+    rateComplete: "✓ Tous les facteurs évalués", rateIncomplete: "facteurs restants",
+    rateNextOption: "Suivant : Évaluer", ratePrevOption: "Précédent :",
+
+    s2_3_title: "Vérification", s2_3_purpose: "Vérifiez que tout est correct.",
+    reviewOptions: "Options :", reviewBaseline: "Référence : Rester sans aucun changement",
+    reviewTopValues: "Priorités :", reviewReady: "Tout est correct?",
+    seeResults: "Voir mes résultats", goBackEdit: "Modifier",
+
+    s2_4_title: "Vos résultats", s2_4_purpose: "Voici comment vos options se comparent.",
+    strongest: "Votre meilleure option :", scoreSummary: "Scores",
+    baseline: "Rester chez moi (sans changement)",
+    factorBreakdown: "Détail par facteur", weight: "Pd", total: "TOTAL",
+    fundingPreview: "Aperçu du financement", fundingPreviewDesc: "Aperçu indicatif du financement disponible.",
+    programs: "Programmes :", maxFunding: "Max :", taxCredits: "Crédits :",
+    indicative: "Chiffres indicatifs. Confirmez auprès des organismes.",
+    prosConsReview: "Vos notes", forTwoTitle: "Côte à côte", forTwoDesc: "Alignement et différences.",
+    agree: "D'accord", disagree: "Différent", pros: "Pour", cons: "Contre",
+    stayAsIs: "Rester (sans changement)",
+    exportPdf: "Imprimer / PDF", startOver: "Recommencer",
+    resultsPart1: "Partie 1 : Votre situation et réflexions",
+    resultsPart1Desc: "Un résumé de tout ce que vous avez partagé sur votre situation, vos valeurs et vos réflexions initiales.",
+    resultsPart2: "Partie 2 : Comparaison structurée (analyse Pugh)",
+    resultsPart2Desc: "Comment vos options se sont classées selon ce qui compte le plus pour vous.",
+    disclaimer: "Cet outil soutient la réflexion — pas un avis professionnel. Confirmez auprès des organismes.",
+  },
+};
+
+const FUNDING = {
+  BC:{programs:["BC RAHA"],max:"$17,500–$20,000",tax:"$3,000 HATC + $1,000 BC credit"},
+  AB:{programs:["RAMP","SHARP"],max:"$24,000–$55,000",tax:"$3,000 HATC"},
+  SK:{programs:["Adaptation for Independence","MN–S DAP (Métis)"],max:"$23,000–$41,000",tax:"$3,000 HATC"},
+  MB:{programs:["Safe & Healthy Home (65+)"],max:"$15,000",tax:"$3,000 HATC"},
+  ON:{programs:["HVMP","Ontario Renovates (varies)"],max:"$15,000–$40,000",tax:"$3,000 HATC"},
+  QC:{programs:["PAD (currently suspended)"],max:"$50,000 (if reinstated)",tax:"$3,000 HATC + QC credits"},
+  NB:{programs:["Housing Assistance (Disability)"],max:"$10,000–$20,000",tax:"$3,000 HATC"},
+  NS:{programs:["Housing Repair & Accessibility"],max:"$38,000",tax:"$3,000 HATC"},
+  PE:{programs:["Home Renovation (Disability)"],max:"$16,000",tax:"$3,000 HATC"},
+  NL:{programs:["Home Modification Program"],max:"$17,500",tax:"$3,000 HATC"},
+  YT:{programs:["Accessibility Grant"],max:"$30,000",tax:"$3,000 HATC"},
+  NT:{programs:["Mobility Modifications"],max:"$50,000",tax:"$3,000 HATC"},
+  NU:{programs:["Home Renovation Program"],max:"$100,000",tax:"$3,000 HATC"},
+};
+const PK = ["BC","AB","SK","MB","ON","QC","NB","NS","PE","NL","YT","NT","NU"];
+
+const C = { teal:"#1a8a7d",tealDark:"#0f6b61",tealLight:"#e0f2f0",gold:"#d4952b",goldLight:"#fdf3e0",bg:"#fafbfc",card:"#ffffff",text:"#1e2d2f",textMid:"#3d5357",textLight:"#6b8185",border:"#d5dfe1",borderLight:"#e8eef0",pos:"#1a7a3a",posLight:"#e8f5eb",neg:"#b52a2a",negLight:"#fdeaea",white:"#ffffff" };
+const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
+
+export default function App() {
+  const [lang, setLang] = useState("en");
+  const t = T[lang];
+  const TOTAL = 11;
+  const [step, setStep] = useState(0);
+  const go = s => { setStep(clamp(s,0,TOTAL-1)); window.scrollTo({top:0,behavior:"smooth"}); };
+
+  // Stage 1
+  const [userOptions, setUserOptions] = useState([""]);
+  const [reasonsText, setReasonsText] = useState("");
+  const [timeline, setTimeline] = useState(null);
+  const [province, setProvince] = useState(null);
+  const [decisionStage, setDecisionStage] = useState(null);
+  const [tenure, setTenure] = useState(null);
+  const [disabilities, setDisabilities] = useState([]);
+  const [condition, setCondition] = useState(null);
+  const [progression, setProgression] = useState(null);
+  const [intention, setIntention] = useState(null);
+  const [ownerPerm, setOwnerPerm] = useState(null);
+  const [involved, setInvolved] = useState([]);
+  const [pressure, setPressure] = useState(null);
+  const [forTwo, setForTwo] = useState(false);
+  const [activePerson, setActivePerson] = useState(1);
+  const [vals, setVals] = useState(Array(12).fill(0));
+  const [p2Vals, setP2Vals] = useState(Array(12).fill(0));
+  const [sure, setSure] = useState(Array(4).fill(null));
+  const [p2Sure, setP2Sure] = useState(Array(4).fill(null));
+  const [prosCons, setProsCons] = useState({});
+  const setPC = (k,v) => setProsCons(p => ({...p,[k]:v}));
+
+  // Stage 2
+  const [ratings, setRatings] = useState({});
+  const [rateIdx, setRateIdx] = useState(0);
+
+  const toggleArr = (a,s,v) => s(a.includes(v)?a.filter(x=>x!==v):[...a,v]);
+  const validOpts = userOptions.filter(Boolean);
+  const derivedWeights = useMemo(() => vals.map(v => clamp(Math.round(v * 2), 0, 10)), [vals]);
+
+  const calcScores = useCallback(ww => { const w=ww||derivedWeights; return validOpts.map((_,oi)=>{ let t=0; for(let fi=0;fi<12;fi++) t+=(w[fi]||0)*(ratings[`${oi}-${fi}`]||0); return t; }); },[validOpts,ratings,derivedWeights]);
+  const scores = useMemo(()=>calcScores(),[calcScores]);
+  const bestIdx = useMemo(()=>{ let b=0; scores.forEach((s,i)=>{if(s>scores[b])b=i;}); return scores.length&&scores[b]>0?b:-1; },[scores]);
+  const maxAbs = useMemo(()=>Math.max(1,...scores.map(Math.abs)),[scores]);
+  const topValues = useMemo(()=>vals.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,5),[vals]);
+  const sureYes = sure.filter(v=>v===true).length;
+
+  // Rating completion tracking
+  const optionCompletion = useMemo(() => {
+    return validOpts.map((_, oi) => {
+      let rated = 0;
+      for (let fi = 0; fi < 12; fi++) { if (ratings[`${oi}-${fi}`] !== undefined) rated++; }
+      return { rated, total: 12, complete: rated === 12 };
+    });
+  }, [validOpts, ratings]);
+  const allOptionsRated = optionCompletion.every(o => o.complete);
+
+  // UI
+  const sH1={fontSize:26,fontWeight:700,color:C.text,lineHeight:1.3,marginBottom:8};
+  const sPurpose={fontSize:15,color:C.textMid,lineHeight:1.6,marginBottom:24};
+  const sCard={background:C.card,borderRadius:14,padding:"24px 28px",border:`1px solid ${C.borderLight}`,marginBottom:20,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"};
+  const sCardLabel={fontSize:16,fontWeight:600,color:C.text,marginBottom:12};
+  const sPrimBtn={background:C.teal,color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
+  const sSecBtn={background:"transparent",color:C.teal,border:`2px solid ${C.teal}`,borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:600,cursor:"pointer"};
+  const sGoldBtn={background:C.gold,color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
+  const sSel=(on)=>({padding:"11px 18px",borderRadius:10,border:`2px solid ${on?C.teal:C.border}`,background:on?C.tealLight:C.card,color:on?C.tealDark:C.text,cursor:"pointer",fontSize:15,transition:"all 0.15s",fontWeight:on?600:400,textAlign:"left",lineHeight:1.4,width:"100%",display:"block"});
+  const sTag=(on)=>({display:"inline-block",padding:"8px 16px",borderRadius:22,border:`1.5px solid ${on?C.teal:C.border}`,background:on?C.tealLight:C.card,color:on?C.tealDark:C.textLight,cursor:"pointer",fontSize:14,fontWeight:on?600:400,margin:"3px 4px",transition:"all 0.15s"});
+  const sInput={width:"100%",padding:"12px 16px",borderRadius:10,border:`1.5px solid ${C.border}`,fontSize:15,outline:"none",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"};
+  const sSlider={width:"100%",accentColor:C.teal,height:6};
+
+  const Nav=({canNext=true,onNext,nextLabel})=>(<div style={{display:"flex",justifyContent:"space-between",marginTop:32,gap:12}}>{step>0?<button onClick={()=>go(step-1)} style={sSecBtn}>{t.back}</button>:<div/>}{step<TOTAL-1&&<button onClick={()=>{if(onNext)onNext();go(step+1);}} style={{...sPrimBtn,opacity:canNext?1:0.5}}>{nextLabel||t.next}</button>}</div>);
+  const PersonTabs=()=>forTwo?(<div style={{display:"flex",gap:8,marginBottom:20}}>{[1,2].map(p=>(<button key={p} onClick={()=>setActivePerson(p)} style={{flex:1,padding:"10px 0",borderRadius:10,border:`2px solid ${activePerson===p?C.teal:C.border}`,background:activePerson===p?C.teal:C.card,color:activePerson===p?C.white:C.text,cursor:"pointer",fontWeight:600,fontSize:14}}>{p===1?t.person1:t.person2}</button>))}</div>):null;
+  const Progress=()=>{const sl=step===0?"":step<=6?t.stage1:t.stage2;const pct=step===0?0:(step/(TOTAL-1))*100;return step===0?null:(<div style={{marginBottom:32}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,fontWeight:700,color:C.teal,textTransform:"uppercase",letterSpacing:1.2}}>{sl}</span><span style={{fontSize:12,color:C.textLight}}>{t.step} {step} {t.of} {TOTAL-1}</span></div><div style={{height:5,background:C.borderLight,borderRadius:3}}><div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${C.tealDark},${C.teal})`,borderRadius:3,transition:"width 0.4s"}}/></div></div>);};
+  const CatHeader=({label})=>(<div style={{fontSize:13,fontWeight:700,color:C.teal,textTransform:"uppercase",letterSpacing:1,marginBottom:14,paddingBottom:6,borderBottom:`2px solid ${C.tealLight}`}}>{label}</div>);
+  const SRow=({label,value})=>value?(<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.textLight,textTransform:"uppercase",letterSpacing:0.5,marginBottom:3}}>{label}</p><p style={{fontSize:15,color:C.text,whiteSpace:"pre-line"}}>{value}</p></div>):null;
+
+  /* ─── SCREENS ─────────────────────────────────────────────────────── */
+
+  const Welcome=()=>(<div style={{maxWidth:600,margin:"0 auto",textAlign:"center",paddingTop:20}}><div style={{width:72,height:72,borderRadius:"50%",background:C.tealLight,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:36}}>🏠</div><h1 style={{fontSize:30,fontWeight:700,color:C.text,marginBottom:12}}>{t.welcomeTitle}</h1><p style={{fontSize:16,color:C.textMid,lineHeight:1.7,marginBottom:24}}>{t.welcomeBody}</p><div style={{textAlign:"left",...sCard}}><p style={{fontWeight:600,marginBottom:10}}>{t.welcomeHow}</p>{t.welcomeSteps.map((s,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:10}}><span style={{width:28,height:28,borderRadius:"50%",background:C.teal,color:C.white,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,flexShrink:0}}>{i+1}</span><span style={{fontSize:15,color:C.textMid,lineHeight:1.5}}>{s}</span></div>))}</div><p style={{fontSize:14,color:C.textLight,marginBottom:28}}>{t.welcomeTime}</p><div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}><button onClick={()=>go(1)} style={{...sPrimBtn,width:"100%",maxWidth:360}}>{t.welcomeStart}</button><button onClick={()=>go(8)} style={{...sSecBtn,width:"100%",maxWidth:360}}>{t.welcomeSkip}</button></div></div>);
+
+  // 1 — Options & Context (OPTIONS FIRST)
+  const S1_1=()=>(<div>
+    <h2 style={sH1}>{t.s1_1_title}</h2><p style={sPurpose}>{t.s1_1_purpose}</p>
+    <div style={sCard}>
+      {userOptions.map((opt,i)=>(<div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"center"}}><span style={{fontWeight:700,color:C.teal,fontSize:16,minWidth:24}}>{i+1}.</span><input value={opt} onChange={e=>{const n=[...userOptions];n[i]=e.target.value;setUserOptions(n);}} placeholder={t.optionPh} style={{...sInput,flex:1,width:"auto"}}/>{userOptions.length>1&&<button onClick={()=>setUserOptions(userOptions.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:C.neg,fontSize:22,cursor:"pointer"}}>×</button>}</div>))}
+      {userOptions.length<4&&<button onClick={()=>setUserOptions([...userOptions,""])} style={{...sSecBtn,width:"100%",marginTop:4,textAlign:"center",fontSize:14,padding:"10px 0"}}>{t.addOption}</button>}
+      <div style={{marginTop:14}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonOpts}</p><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{t.suggestions.map((s,i)=><span key={i} onClick={()=>{const idx=userOptions.findIndex(o=>!o);if(idx>=0){const n=[...userOptions];n[idx]=s;setUserOptions(n);}else if(userOptions.length<4)setUserOptions([...userOptions,s]);}} style={sTag(false)}>{s}</span>)}</div></div>
+    </div>
+    <div style={sCard}><p style={sCardLabel}>{t.reasonsQ}</p><textarea value={reasonsText} onChange={e=>setReasonsText(e.target.value)} placeholder={t.reasonsPh} rows={3} style={sInput}/><div style={{marginTop:10}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonReasons}</p><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{t.reasonSuggestions.map((s,i)=><span key={i} onClick={()=>setReasonsText(p=>p?p+"; "+s:s)} style={sTag(reasonsText.includes(s))}>{s}</span>)}</div></div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.timelineQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.timelines.map((tl,i)=><button key={i} onClick={()=>setTimeline(i)} style={sSel(timeline===i)}>{tl}</button>)}</div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.provinceQ}</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{PK.map((pk,i)=><span key={pk} onClick={()=>setProvince(pk)} style={sTag(province===pk)}>{t.provinces[i]}</span>)}</div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.stageQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.stages.map((s,i)=><button key={i} onClick={()=>setDecisionStage(i)} style={sSel(decisionStage===i)}>{s}</button>)}</div></div>
+    <Nav/>
+  </div>);
+
+  // 2 — Disability & Tenure
+  const S1_2=()=>(<div>
+    <h2 style={sH1}>{t.s1_2_title}</h2><p style={sPurpose}>{t.s1_2_purpose}</p>
+    <div style={sCard}><p style={sCardLabel}>{t.tenureQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.tenures.map((v,i)=><button key={i} onClick={()=>setTenure(i)} style={sSel(tenure===i)}>{v}</button>)}</div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.disabilityQ}</p><p style={{fontSize:13,color:C.textLight,marginBottom:10}}>{t.disabilityNote}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.disabilities.map((d,i)=><button key={i} onClick={()=>toggleArr(disabilities,setDisabilities,i)} style={sSel(disabilities.includes(i))}>{d}</button>)}</div></div>
+    {!disabilities.includes(3)&&disabilities.length>0&&(<>
+      <div style={sCard}><p style={sCardLabel}>{t.conditionQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.conditionOpts.map((c,i)=><button key={i} onClick={()=>setCondition(i)} style={sSel(condition===i)}>{c}</button>)}</div></div>
+      <div style={sCard}><p style={sCardLabel}>{t.progressionQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.progressions.map((p,i)=><button key={i} onClick={()=>setProgression(i)} style={sSel(progression===i)}>{p}</button>)}</div></div>
+    </>)}
+    <div style={sCard}><p style={sCardLabel}>{t.intentionQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.intentions.map((v,i)=><button key={i} onClick={()=>setIntention(i)} style={sSel(intention===i)}>{v}</button>)}</div></div>
+    {tenure!==null&&tenure!==0&&tenure!==4&&(<div style={sCard}><p style={sCardLabel}>{t.ownerPermQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.ownerPerms.map((v,i)=><button key={i} onClick={()=>setOwnerPerm(i)} style={sSel(ownerPerm===i)}>{v}</button>)}</div></div>)}
+    <Nav/>
+  </div>);
+
+  // 3 — Who's Involved
+  const S1_3=()=>(<div>
+    <h2 style={sH1}>{t.s1_3_title}</h2><p style={sPurpose}>{t.s1_3_purpose}</p>
+    <div style={sCard}><p style={sCardLabel}>{t.involvedQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.involved.map((v,i)=><button key={i} onClick={()=>toggleArr(involved,setInvolved,i)} style={sSel(involved.includes(i))}>{v}</button>)}</div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.pressureQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.pressures.map((p,i)=><button key={i} onClick={()=>setPressure(i)} style={sSel(pressure===i)}>{p}</button>)}</div>{(pressure===0||pressure===1)&&<p style={{marginTop:12,fontSize:14,color:C.gold,lineHeight:1.5}}>💡 {t.pressureFollowup}</p>}</div>
+    <div style={sCard}><p style={sCardLabel}>{t.forTwoQ}</p><p style={{fontSize:14,color:C.textLight,marginBottom:12}}>{t.forTwoDesc}</p><div style={{display:"flex",gap:10}}><button onClick={()=>setForTwo(true)} style={{...sSel(forTwo),flex:1,textAlign:"center"}}>{t.forTwoYes}</button><button onClick={()=>setForTwo(false)} style={{...sSel(!forTwo),flex:1,textAlign:"center"}}>{t.forTwoNo}</button></div></div>
+    <Nav/>
+  </div>);
+
+  // 4 — Values
+  const catR=[[0,3],[3,5],[5,9],[9,12]];
+  const catN=[t.catConnections,t.catMoney,t.catHome,t.catFuture];
+  const S1_4=()=>{const src=activePerson===2?p2Vals:vals;const setSrc=activePerson===2?setP2Vals:setVals;const upd=(i,v)=>{const n=[...src];n[i]=Number(v);setSrc(n);};return(<div><h2 style={sH1}>{t.s1_4_title}</h2><p style={sPurpose}>{t.s1_4_purpose}</p><PersonTabs/>{catN.map((cat,ci)=>(<div key={ci} style={sCard}><CatHeader label={cat}/>{t.values.slice(catR[ci][0],catR[ci][1]).map((v,vi)=>{const idx=catR[ci][0]+vi;return(<div key={idx} style={{marginBottom:22}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:15}}>{v}</span><span style={{fontWeight:700,color:C.teal,fontSize:20,minWidth:28,textAlign:"right"}}>{src[idx]}</span></div><input type="range" min="0" max="5" value={src[idx]} onChange={e=>upd(idx,e.target.value)} style={sSlider}/><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,color:C.textLight}}>{t.notImportant}</span><span style={{fontSize:11,color:C.textLight}}>{t.veryImportant}</span></div></div>);})}</div>))}<Nav/></div>);};
+
+  // 5 — Pros & Cons (after Values, before SURE)
+  const S2_0 = () => (
+    <div>
+      <h2 style={sH1}>{t.s2_0_title}</h2>
+      <p style={sPurpose}>{t.s2_0_purpose}</p>
+      {validOpts.map((opt, i) => (
+        <div key={i} style={{...sCard, borderLeft: `4px solid ${C.teal}`}}>
+          <p style={{fontWeight: 700, fontSize: 18, color: C.teal, marginBottom: 14}}>{i + 1}. {opt}</p>
+          <div style={{marginBottom: 16}}>
+            <p style={{fontSize: 14, fontWeight: 600, color: C.pos, marginBottom: 6}}>{"✓ "}{t.prosLabel}</p>
+            <textarea value={prosCons[`${i}-pros`] || ""} onChange={e => setPC(`${i}-pros`, e.target.value)} placeholder={t.prosPh} rows={3} style={sInput} />
+          </div>
+          <div>
+            <p style={{fontSize: 14, fontWeight: 600, color: C.neg, marginBottom: 6}}>{"✗ "}{t.consLabel}</p>
+            <textarea value={prosCons[`${i}-cons`] || ""} onChange={e => setPC(`${i}-cons`, e.target.value)} placeholder={t.consPh} rows={3} style={sInput} />
+          </div>
+        </div>
+      ))}
+      <div style={{...sCard, borderLeft: `4px solid ${C.gold}`, background: C.goldLight}}>
+        <p style={{fontWeight: 700, fontSize: 16, color: C.gold, marginBottom: 14}}>{"⚓ "}{t.alsoConsider}</p>
+        <div style={{marginBottom: 16}}>
+          <p style={{fontSize: 14, fontWeight: 600, color: C.pos, marginBottom: 6}}>{"✓ "}{t.stayProsLabel}</p>
+          <textarea value={prosCons["stay-pros"] || ""} onChange={e => setPC("stay-pros", e.target.value)} placeholder={t.prosPh} rows={3} style={{...sInput, background: C.white}} />
+        </div>
+        <div>
+          <p style={{fontSize: 14, fontWeight: 600, color: C.neg, marginBottom: 6}}>{"✗ "}{t.stayConsLabel}</p>
+          <textarea value={prosCons["stay-cons"] || ""} onChange={e => setPC("stay-cons", e.target.value)} placeholder={t.consPh} rows={3} style={{...sInput, background: C.white}} />
+        </div>
+      </div>
+      <Nav />
+    </div>
+  );
+
+  // 6 — SURE
+  const S1_5 = () => {
+    const src = activePerson === 2 ? p2Sure : sure;
+    const setSrc = activePerson === 2 ? setP2Sure : setSure;
+    const yN = src.filter(v => v === true).length;
+    const done = src.every(v => v !== null);
+    const msg = yN >= 4 ? t.sureGood : yN >= 2 ? t.sureMid : t.sureLow;
+    const msgBg = yN >= 4 ? C.posLight : yN >= 2 ? C.goldLight : C.negLight;
+    const msgBdr = yN >= 4 ? C.pos : yN >= 2 ? C.gold : C.neg;
+    return (
+      <div>
+        <h2 style={sH1}>{t.s1_5_title}</h2>
+        <p style={sPurpose}>{t.s1_5_purpose}</p>
+        <PersonTabs />
+        {t.sureQs.map((q, qi) => (
+          <div key={qi} style={sCard}>
+            <p style={sCardLabel}>{q}</p>
+            <div style={{display: "flex", gap: 10, marginBottom: 8}}>
+              <button onClick={() => { const n = [...src]; n[qi] = true; setSrc(n); }} style={{...sSel(src[qi] === true), flex: 1, textAlign: "center"}}>{t.yes}</button>
+              <button onClick={() => { const n = [...src]; n[qi] = false; setSrc(n); }} style={{...sSel(src[qi] === false), flex: 1, textAlign: "center"}}>{t.no}</button>
+            </div>
+            {src[qi] === false && (
+              <div style={{marginTop: 12, background: C.goldLight, borderRadius: 10, padding: "14px 18px"}}>
+                <p style={{fontWeight: 600, color: C.gold, fontSize: 14, marginBottom: 8}}>{"💡 "}{t.sureHelp[qi].title}</p>
+                {t.sureHelp[qi].tips.map((tip, ti) => (
+                  <div key={ti} style={{display: "flex", gap: 8, marginBottom: 6}}>
+                    <span style={{color: C.gold, fontSize: 12, marginTop: 2}}>{"▸"}</span>
+                    <span style={{fontSize: 14, color: C.textMid, lineHeight: 1.5}}>{tip}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {done && (
+          <div style={{...sCard, background: msgBg, borderLeft: `4px solid ${msgBdr}`}}>
+            <p style={{fontWeight: 600, color: C.text, fontSize: 16}}>{msg}</p>
+          </div>
+        )}
+        <Nav />
+      </div>
+    );
+  };
+
+  // Reusable pros/cons summary card
+  const hasPC = validOpts.some((_, i) => prosCons[`${i}-pros`] || prosCons[`${i}-cons`]) || prosCons["stay-pros"] || prosCons["stay-cons"];
+  const PCCard = () => {
+    if (!hasPC) return null;
+    return (
+      <div style={sCard}>
+        <p style={{fontSize: 12, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10}}>{t.prosConsReview}</p>
+        {validOpts.map((opt, i) => (prosCons[`${i}-pros`] || prosCons[`${i}-cons`]) ? (
+          <div key={i} style={{marginBottom: 12, padding: "10px 14px", background: C.bg, borderRadius: 8}}>
+            <p style={{fontWeight: 600, color: C.teal, marginBottom: 4, fontSize: 14}}>{opt}</p>
+            {prosCons[`${i}-pros`] && <p style={{fontSize: 13, marginBottom: 2}}><span style={{color: C.pos, fontWeight: 600}}>{"✓ "}</span>{prosCons[`${i}-pros`]}</p>}
+            {prosCons[`${i}-cons`] && <p style={{fontSize: 13}}><span style={{color: C.neg, fontWeight: 600}}>{"✗ "}</span>{prosCons[`${i}-cons`]}</p>}
+          </div>
+        ) : null)}
+        {(prosCons["stay-pros"] || prosCons["stay-cons"]) && (
+          <div style={{padding: "10px 14px", background: C.goldLight, borderRadius: 8}}>
+            <p style={{fontWeight: 600, color: C.gold, marginBottom: 4, fontSize: 14}}>{t.stayAsIs}</p>
+            {prosCons["stay-pros"] && <p style={{fontSize: 13, marginBottom: 2}}><span style={{color: C.pos, fontWeight: 600}}>{"✓ "}</span>{prosCons["stay-pros"]}</p>}
+            {prosCons["stay-cons"] && <p style={{fontSize: 13}}><span style={{color: C.neg, fontWeight: 600}}>{"✗ "}</span>{prosCons["stay-cons"]}</p>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 7 — OPDG Summary (includes pros/cons)
+  const S1_6 = () => {
+    const ri = sureYes >= 4 ? 2 : sureYes >= 2 ? 1 : 0;
+    return (
+      <div>
+        <h2 style={sH1}>{t.s1_6_title}</h2>
+        <p style={sPurpose}>{t.s1_6_purpose}</p>
+        <div style={sCard}>
+          <SRow label={t.summaryOptions} value={validOpts.map((o, i) => `${i + 1}. ${o}`).join("\n") || "\u2014"} />
+          <SRow label={t.summaryReasons} value={reasonsText || "\u2014"} />
+          <SRow label={t.summaryTimeline} value={timeline !== null ? t.timelines[timeline] : null} />
+          <SRow label={t.summaryProvince} value={province ? t.provinceFull[PK.indexOf(province)] : null} />
+        </div>
+        <div style={sCard}>
+          <SRow label={t.summaryTenure} value={tenure !== null ? t.tenures[tenure] : null} />
+          <SRow label={t.summaryDisability} value={disabilities.length ? disabilities.map(di => t.disabilities[di]).join("; ") : null} />
+          {condition !== null && <SRow label={t.summaryDuration} value={t.conditionOpts[condition]} />}
+          {progression !== null && <SRow label={lang === "en" ? "Condition progression" : "\u00c9volution"} value={t.progressions[progression]} />}
+          <SRow label={t.summaryIntention} value={intention !== null ? t.intentions[intention] : null} />
+          {ownerPerm !== null && <SRow label={t.summaryPermission} value={t.ownerPerms[ownerPerm]} />}
+        </div>
+        <div style={sCard}>
+          <SRow label={t.summaryInvolved} value={involved.length ? involved.map(ii => t.involved[ii]).join(", ") : "\u2014"} />
+          <SRow label={t.summaryPressure} value={pressure !== null ? t.pressures[pressure] : "\u2014"} />
+        </div>
+        {topValues.length > 0 && (
+          <div style={sCard}>
+            <p style={{fontSize: 12, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10}}>{t.summaryTopValues}</p>
+            {topValues.map(({v, i: idx}) => (
+              <div key={idx} style={{display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: `1px solid ${C.borderLight}`}}>
+                <span style={{fontSize: 14}}>{t.values[idx]}</span>
+                <span style={{fontWeight: 700, color: C.teal}}>{v}/5</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <PCCard />
+        <div style={sCard}><SRow label={t.summaryReadiness} value={t.readinessLabels[ri]} /></div>
+        <div style={{...sCard, background: C.tealLight, borderLeft: `4px solid ${C.teal}`}}>
+          <p style={{fontSize: 15, color: C.tealDark, lineHeight: 1.6}}>{t.summaryNext}</p>
+        </div>
+        <Nav nextLabel={t.continueToCompare} />
+      </div>
+    );
+  };
+
+  // 8 — Rate Options
+  const S2_2 = () => {
+    const opt = validOpts[rateIdx];
+    if (!opt && validOpts.length > 0) { setRateIdx(0); return null; }
+    const setR = (fi, s) => setRatings({...ratings, [`${rateIdx}-${fi}`]: s});
+    const comp = optionCompletion[rateIdx] || {rated: 0, total: 12, complete: false};
+    const remaining = comp.total - comp.rated;
+    return (
+      <div>
+        <h2 style={sH1}>{t.s2_2_title}</h2>
+        <p style={sPurpose}>{t.s2_2_purpose}</p>
+        <div style={{...sCard, background: C.tealLight, borderLeft: `4px solid ${C.teal}`, marginBottom: 20}}>
+          <p style={{fontWeight: 600, color: C.tealDark, fontSize: 14}}>{"⚓ "}{t.baselineNote}</p>
+        </div>
+        <div style={{display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap"}}>
+          {validOpts.map((o, i) => {
+            const oc = optionCompletion[i] || {rated: 0, total: 12, complete: false};
+            return (
+              <button key={i} onClick={() => { setRateIdx(i); window.scrollTo({top: 0, behavior: "smooth"}); }}
+                style={{padding: "10px 18px", borderRadius: 10,
+                  border: `2px solid ${rateIdx === i ? C.gold : oc.complete ? C.pos : C.border}`,
+                  background: rateIdx === i ? C.goldLight : oc.complete ? C.posLight : C.card,
+                  color: rateIdx === i ? C.text : oc.complete ? C.pos : C.textLight,
+                  cursor: "pointer", fontWeight: rateIdx === i ? 700 : 400, fontSize: 14}}>
+                {oc.complete && <span style={{marginRight: 6}}>{"✓"}</span>}{i + 1}. {o}
+                {!oc.complete && <span style={{display: "block", fontSize: 11, color: C.textLight, marginTop: 2}}>{oc.total - oc.rated} {t.rateIncomplete}</span>}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{...sCard, background: C.goldLight, borderLeft: `4px solid ${C.gold}`}}>
+          <p style={{fontWeight: 700, fontSize: 18, color: C.text}}>{t.ratingInstruction} <span style={{color: C.teal}}>{opt}</span></p>
+          <p style={{fontSize: 14, color: C.textMid, marginTop: 8, lineHeight: 1.5, fontStyle: "italic"}}>{t.ratingCompare}</p>
+        </div>
+        {t.factors.map((f, fi) => {
+          const cur = ratings[`${rateIdx}-${fi}`];
+          return (
+            <div key={fi} style={{...sCard, padding: "18px 22px"}}>
+              <p style={{fontSize: 15, fontWeight: 500, marginBottom: 6}}>{f}</p>
+              <p style={{fontSize: 12, color: C.textLight, marginBottom: 10, textAlign: "center"}}>{t.ratingHint}</p>
+              <div style={{display: "flex", gap: 5, flexWrap: "wrap"}}>
+                {t.ratings.map((label, ri) => {
+                  const sc = t.ratingScores[ri];
+                  const on = cur === sc;
+                  const btnBg = on ? (sc < 0 ? C.neg : sc > 0 ? C.pos : C.textLight) : C.card;
+                  return (
+                    <button key={ri} onClick={() => setR(fi, sc)}
+                      style={{flex: "1 1 0", padding: "9px 6px", borderRadius: 8,
+                        border: `1.5px solid ${on ? btnBg : C.border}`,
+                        background: on ? btnBg : C.card,
+                        color: on ? C.white : C.text,
+                        fontSize: 13, cursor: "pointer", fontWeight: on ? 600 : 400, minWidth: 60}}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{...sCard, background: comp.complete ? C.posLight : C.goldLight, borderLeft: `4px solid ${comp.complete ? C.pos : C.gold}`, textAlign: "center"}}>
+          <p style={{fontWeight: 600, fontSize: 15, color: comp.complete ? C.pos : C.gold}}>
+            {comp.complete ? t.rateComplete : `${remaining} ${t.rateIncomplete}`}
+          </p>
+        </div>
+        <div style={{display: "flex", justifyContent: "space-between", marginTop: 16, gap: 12, flexWrap: "wrap"}}>
+          {rateIdx > 0 && (
+            <button onClick={() => { setRateIdx(rateIdx - 1); window.scrollTo({top: 0, behavior: "smooth"}); }} style={sSecBtn}>
+              {t.ratePrevOption} {validOpts[rateIdx - 1]}
+            </button>
+          )}
+          {rateIdx < validOpts.length - 1 && (
+            <button onClick={() => { setRateIdx(rateIdx + 1); window.scrollTo({top: 0, behavior: "smooth"}); }} style={{...sGoldBtn, marginLeft: "auto"}}>
+              {t.rateNextOption} {validOpts[rateIdx + 1]} {"\u2192"}
+            </button>
+          )}
+        </div>
+        {allOptionsRated ? (
+          <div style={{marginTop: 20}}><Nav /></div>
+        ) : (
+          <div style={{...sCard, background: C.goldLight, textAlign: "center", marginTop: 20}}>
+            <p style={{fontSize: 14, color: C.gold, fontWeight: 600}}>{t.rateAllPrompt}</p>
+            <p style={{fontSize: 13, color: C.textLight, marginTop: 6}}>
+              {validOpts.map((o, i) => { const oc = optionCompletion[i]; return oc && oc.complete ? `\u2713 ${o}` : `\u25CB ${o}`; }).join("  \u00B7  ")}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 9 — Review
+  const S2_3 = () => (
+    <div>
+      <h2 style={sH1}>{t.s2_3_title}</h2>
+      <p style={sPurpose}>{t.s2_3_purpose}</p>
+      <div style={sCard}>
+        <p style={{fontSize: 13, color: C.textLight, fontWeight: 600, marginBottom: 4}}>{t.reviewBaseline}</p>
+        <p style={{fontSize: 13, color: C.textLight, fontWeight: 600, marginBottom: 8, marginTop: 12}}>{t.reviewOptions}</p>
+        {validOpts.map((o, i) => (
+          <div key={i} style={{display: "flex", gap: 8, alignItems: "center", marginBottom: 6}}>
+            <span style={{width: 24, height: 24, borderRadius: "50%", background: C.teal, color: C.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12}}>{i + 1}</span>
+            <span style={{fontSize: 15}}>{o}</span>
+          </div>
+        ))}
+      </div>
+      {topValues.length > 0 && (
+        <div style={sCard}>
+          <p style={{fontSize: 13, color: C.textLight, fontWeight: 600, marginBottom: 8}}>{t.reviewTopValues}</p>
+          {topValues.map(({v, i: idx}) => (
+            <div key={idx} style={{display: "flex", justifyContent: "space-between", padding: "4px 0"}}>
+              <span style={{fontSize: 14}}>{t.values[idx]}</span>
+              <span style={{fontWeight: 700, color: C.teal}}>{v}/5</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{textAlign: "center", marginTop: 24}}>
+        <p style={{fontWeight: 600, fontSize: 16, marginBottom: 16}}>{t.reviewReady}</p>
+        <div style={{display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap"}}>
+          <button onClick={() => go(1)} style={sSecBtn}>{t.goBackEdit}</button>
+          <button onClick={() => go(10)} style={sGoldBtn}>{t.seeResults}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // 10 — Results
+  const S2_4 = () => {
+    const funding = province ? FUNDING[province] : null;
+    const maxBar = 180;
+    const ri = sureYes >= 4 ? 2 : sureYes >= 2 ? 1 : 0;
+    const sSection = {fontSize: 20, fontWeight: 700, color: C.tealDark, marginBottom: 4, marginTop: 36};
+    const sSectionDesc = {fontSize: 14, color: C.textMid, marginBottom: 18, lineHeight: 1.5};
+    return (
+      <div>
+        <h2 style={sH1}>{t.s2_4_title}</h2>
+        <p style={sPurpose}>{t.s2_4_purpose}</p>
+
+        <div style={{...sCard, background: C.goldLight, borderLeft: `4px solid ${C.gold}`, fontSize: 13, color: C.textMid}}>
+          {"\u26A0\uFE0F "}{t.disclaimer}
+        </div>
+
+        {/* ═══ PART 1: Qualitative / Self-Report Summary ═══ */}
+        <div style={{...sSection, marginTop: 24, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart1}</div>
+        <p style={sSectionDesc}>{t.resultsPart1Desc}</p>
+
+        <div style={sCard}>
+          <SRow label={t.summaryOptions} value={validOpts.map((o, i) => `${i + 1}. ${o}`).join("\n") || "\u2014"} />
+          <SRow label={t.summaryReasons} value={reasonsText || "\u2014"} />
+          <SRow label={t.summaryTimeline} value={timeline !== null ? t.timelines[timeline] : null} />
+          <SRow label={t.summaryProvince} value={province ? t.provinceFull[PK.indexOf(province)] : null} />
+        </div>
+        <div style={sCard}>
+          <SRow label={t.summaryTenure} value={tenure !== null ? t.tenures[tenure] : null} />
+          <SRow label={t.summaryDisability} value={disabilities.length ? disabilities.map(di => t.disabilities[di]).join("; ") : null} />
+          {condition !== null && <SRow label={t.summaryDuration} value={t.conditionOpts[condition]} />}
+          {progression !== null && <SRow label={lang === "en" ? "Condition progression" : "\u00c9volution"} value={t.progressions[progression]} />}
+          <SRow label={t.summaryIntention} value={intention !== null ? t.intentions[intention] : null} />
+          {ownerPerm !== null && <SRow label={t.summaryPermission} value={t.ownerPerms[ownerPerm]} />}
+        </div>
+        <div style={sCard}>
+          <SRow label={t.summaryInvolved} value={involved.length ? involved.map(ii => t.involved[ii]).join(", ") : "\u2014"} />
+          <SRow label={t.summaryPressure} value={pressure !== null ? t.pressures[pressure] : "\u2014"} />
+        </div>
+        {topValues.length > 0 && (
+          <div style={sCard}>
+            <p style={{fontSize: 12, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10}}>{t.summaryTopValues}</p>
+            {topValues.map(({v, i: idx}) => (
+              <div key={idx} style={{display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: `1px solid ${C.borderLight}`}}>
+                <span style={{fontSize: 14}}>{t.values[idx]}</span>
+                <span style={{fontWeight: 700, color: C.teal}}>{v}/5</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <PCCard />
+        <div style={sCard}><SRow label={t.summaryReadiness} value={t.readinessLabels[ri]} /></div>
+
+        {/* ═══ PART 2: Pugh Structured Comparison ═══ */}
+        <div style={{...sSection, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart2}</div>
+        <p style={sSectionDesc}>{t.resultsPart2Desc}</p>
+
+        {bestIdx >= 0 && (
+          <div style={{...sCard, background: C.posLight, borderLeft: `4px solid ${C.pos}`, textAlign: "center", padding: 32}}>
+            <p style={{fontSize: 14, color: C.textLight, marginBottom: 4}}>{t.strongest}</p>
+            <p style={{fontSize: 28, fontWeight: 700, color: C.pos, marginBottom: 4}}>{validOpts[bestIdx]}</p>
+            <p style={{fontSize: 36, fontWeight: 800, color: C.pos}}>+{scores[bestIdx]}</p>
+          </div>
+        )}
+
+        <div style={sCard}>
+          <p style={{fontWeight: 700, fontSize: 18, marginBottom: 18}}>{t.scoreSummary}</p>
+          <div style={{marginBottom: 12, display: "flex", alignItems: "center", gap: 10}}>
+            <span style={{minWidth: 130, fontSize: 13, textAlign: "right", color: C.textLight}}>{t.baseline}</span>
+            <div style={{flex: 1, height: 2, background: C.border}} />
+            <span style={{fontWeight: 700, color: C.textLight, minWidth: 36}}>0</span>
+          </div>
+          {validOpts.map((opt, i) => {
+            const s = scores[i] || 0;
+            const bw = Math.abs(s) / maxAbs * maxBar;
+            return (
+              <div key={i} style={{display: "flex", alignItems: "center", gap: 10, marginBottom: 10}}>
+                <span style={{minWidth: 130, fontSize: 13, textAlign: "right", fontWeight: i === bestIdx ? 700 : 400}}>
+                  {opt.length > 22 ? opt.slice(0, 22) + "\u2026" : opt}
+                </span>
+                <div style={{flex: 1, display: "flex", alignItems: "center", justifyContent: s >= 0 ? "flex-start" : "flex-end", height: 22}}>
+                  <div style={{width: bw, height: 18, background: s >= 0 ? C.pos : C.neg, borderRadius: 4, transition: "width 0.5s", minWidth: s !== 0 ? 4 : 0}} />
+                </div>
+                <span style={{fontWeight: 700, minWidth: 36, color: s >= 0 ? C.pos : C.neg}}>
+                  {s > 0 ? "+" : ""}{s}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={sCard}>
+          <p style={{fontWeight: 700, fontSize: 18, marginBottom: 14}}>{t.factorBreakdown}</p>
+          <div style={{overflowX: "auto"}}>
+            <table style={{width: "100%", borderCollapse: "collapse", fontSize: 13}}>
+              <thead>
+                <tr style={{borderBottom: `2px solid ${C.border}`}}>
+                  <th style={{textAlign: "left", padding: "8px 4px"}}>{lang === "en" ? "Factor" : "Facteur"}</th>
+                  <th style={{padding: "8px 4px", textAlign: "center", width: 36}}>{t.weight}</th>
+                  {validOpts.map((o, i) => (
+                    <th key={i} style={{padding: "8px 4px", textAlign: "center"}}>
+                      {o.length > 12 ? o.slice(0, 12) + "\u2026" : o}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {t.factors.map((f, fi) => {
+                  const fw = derivedWeights[fi] || 0;
+                  return (
+                    <tr key={fi} style={{borderBottom: `1px solid ${C.borderLight}`}}>
+                      <td style={{padding: "6px 4px", fontSize: 12}}>{f}</td>
+                      <td style={{textAlign: "center", fontWeight: 600, color: C.teal}}>{fw}</td>
+                      {validOpts.map((_, oi) => {
+                        const cv = fw * (ratings[`${oi}-${fi}`] || 0);
+                        return (
+                          <td key={oi} style={{textAlign: "center", fontWeight: 600, color: cv > 0 ? C.pos : cv < 0 ? C.neg : C.textLight}}>
+                            {cv > 0 ? "+" : ""}{cv}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+                <tr style={{borderTop: `2px solid ${C.text}`}}>
+                  <td style={{padding: "10px 4px", fontWeight: 700}}>{t.total}</td>
+                  <td></td>
+                  {validOpts.map((_, i) => (
+                    <td key={i} style={{textAlign: "center", fontWeight: 700, fontSize: 16, color: (scores[i] || 0) >= 0 ? C.pos : C.neg}}>
+                      {(scores[i] || 0) > 0 ? "+" : ""}{scores[i] || 0}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {funding && (
+          <div style={sCard}>
+            <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.fundingPreview}</p>
+            <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.fundingPreviewDesc}</p>
+            <div style={{background: C.tealLight, borderRadius: 10, padding: 18}}>
+              <p style={{fontWeight: 700, color: C.tealDark, marginBottom: 10}}>{t.provinceFull[PK.indexOf(province)]}</p>
+              <p style={{fontSize: 14, marginBottom: 4}}><strong>{t.programs}</strong> {funding.programs.join(", ")}</p>
+              <p style={{fontSize: 14, marginBottom: 4}}><strong>{t.maxFunding}</strong> {funding.max}</p>
+              <p style={{fontSize: 14}}><strong>{t.taxCredits}</strong> {funding.tax}</p>
+            </div>
+            <p style={{fontSize: 12, color: C.textLight, marginTop: 10, fontStyle: "italic"}}>{t.indicative}</p>
+          </div>
+        )}
+
+        {forTwo && (
+          <div style={sCard}>
+            <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.forTwoTitle}</p>
+            <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.forTwoDesc}</p>
+            <table style={{width: "100%", borderCollapse: "collapse", fontSize: 13}}>
+              <thead>
+                <tr style={{borderBottom: `2px solid ${C.border}`}}>
+                  <th style={{textAlign: "left", padding: "8px 4px"}}>{lang === "en" ? "Value" : "Valeur"}</th>
+                  <th style={{textAlign: "center", padding: "8px 4px"}}>{t.person1}</th>
+                  <th style={{textAlign: "center", padding: "8px 4px"}}>{t.person2}</th>
+                  <th style={{textAlign: "center", padding: "8px 4px"}}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {t.values.map((v, vi) => {
+                  const diff = Math.abs(vals[vi] - p2Vals[vi]);
+                  return (
+                    <tr key={vi} style={{borderBottom: `1px solid ${C.borderLight}`}}>
+                      <td style={{padding: "6px 4px", fontSize: 12}}>{v}</td>
+                      <td style={{textAlign: "center", fontWeight: 600, color: C.teal}}>{vals[vi]}</td>
+                      <td style={{textAlign: "center", fontWeight: 600, color: C.gold}}>{p2Vals[vi]}</td>
+                      <td style={{textAlign: "center"}}>
+                        <span style={{fontSize: 11, fontWeight: 600,
+                          color: diff <= 1 ? C.pos : C.neg,
+                          background: diff <= 1 ? C.posLight : C.negLight,
+                          padding: "3px 8px", borderRadius: 10}}>
+                          {diff <= 1 ? `\u2713 ${t.agree}` : `\u26A1 ${t.disagree}`}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div style={{display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap"}}>
+          <button onClick={() => window.print()} style={sPrimBtn}>
+            {"\uD83D\uDDA8\uFE0F "}{t.exportPdf}
+          </button>
+          <button onClick={() => {
+            setStep(0); setUserOptions([""]); setReasonsText(""); setTimeline(null);
+            setProvince(null); setDecisionStage(null); setTenure(null); setDisabilities([]);
+            setCondition(null); setProgression(null); setIntention(null); setOwnerPerm(null);
+            setInvolved([]); setPressure(null); setVals(Array(12).fill(0)); setP2Vals(Array(12).fill(0));
+            setSure(Array(4).fill(null)); setP2Sure(Array(4).fill(null));
+            setRatings({}); setRateIdx(0); setProsCons({});
+          }} style={sSecBtn}>{t.startOver}</button>
+        </div>
+      </div>
+    );
+  };
+
+  // Router: 0=Welcome 1=Options 2=Disability 3=Involved 4=Values 5=ProsCons 6=SURE 7=Summary 8=Rate 9=Review 10=Results
+  const renderScreen = () => {
+    switch (step) {
+      case 0: return Welcome();
+      case 1: return S1_1();
+      case 2: return S1_2();
+      case 3: return S1_3();
+      case 4: return S1_4();
+      case 5: return S2_0();
+      case 6: return S1_5();
+      case 7: return S1_6();
+      case 8: return S2_2();
+      case 9: return S2_3();
+      case 10: return S2_4();
+      default: return Welcome();
+    }
+  };
+
+  return (
+    <div style={{minHeight: "100vh", background: C.bg, fontFamily: "'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',sans-serif", color: C.text}}>
+      <div style={{background: C.tealDark, color: C.white, padding: "14px 24px"}}>
+        <div style={{maxWidth: 740, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+          <div style={{display: "flex", alignItems: "center", gap: 12}}>
+            <div style={{width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20}}>
+              {"\uD83C\uDFE0"}
+            </div>
+            <div>
+              <div style={{fontSize: 18, fontWeight: 700, letterSpacing: 0.3}}>{t.title}</div>
+              <div style={{fontSize: 11, opacity: 0.8}}>{t.subtitle}</div>
+            </div>
+          </div>
+          <button onClick={() => setLang(lang === "en" ? "fr" : "en")}
+            style={{background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", color: C.white, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600}}>
+            {t.langSwitch}
+          </button>
+        </div>
+      </div>
+      <div style={{maxWidth: 740, margin: "0 auto", padding: "28px 18px 100px"}}>
+        <Progress />
+        {renderScreen()}
+      </div>
+      <div style={{background: C.tealDark, color: "rgba(255,255,255,0.6)", padding: "14px 24px", textAlign: "center", fontSize: 11, position: "fixed", bottom: 0, left: 0, right: 0}}>
+        {t.tagline} {"\u00B7"} {"\u00A9"} 2026 Home Accessibility Toolkit Project {"\u00B7"} Sunnybrook Research Institute
+      </div>
+    </div>
+  );
+}
