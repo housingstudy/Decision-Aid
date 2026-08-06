@@ -7,6 +7,38 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; }
+
+  @media print {
+    /* Hide all UI chrome */
+    #app-header, #app-footer, #progress-bar, #nav-buttons, #print-buttons { display: none !important; }
+
+    /* Reset page layout */
+    body { background: white !important; }
+    #root > div { min-height: unset !important; }
+    #app-main { padding: 0 !important; max-width: 100% !important; }
+
+    /* Page break control */
+    .print-page-break { page-break-before: always; break-before: page; }
+    .print-no-break { page-break-inside: avoid; break-inside: avoid; }
+
+    /* Compact cards for print */
+    .print-card { box-shadow: none !important; border: 1px solid #d5dfe1 !important; margin-bottom: 10px !important; padding: 12px 16px !important; }
+
+    /* Force background colors to print */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Hide Yes/No buttons and Start Over in SURE section */
+    .sure-buttons { display: none !important; }
+
+    /* Always show SURE tips in print */
+    .sure-tip { display: block !important; }
+
+    /* Hide score bar chart (not useful on paper) — keep table */
+    .print-hide { display: none !important; }
+
+    /* Tighten font sizes slightly */
+    body { font-size: 12px; }
+  }
 </style>
 <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
@@ -36,8 +68,7 @@ const T = {
       "Review your results — get a clear summary you can share with family, an occupational therapist, or an advisor",
     ],
     welcomeTime: "Takes about 15–20 minutes. Your information stays private — nothing is stored.",
-    welcomeStart: "Start from the Beginning",
-    welcomeSkip: "I've already decided — skip to comparing options",
+    welcomeStart: "Start",
 
     stage1: "Clarify Your Decision", stage2: "Compare Your Options",
 
@@ -190,7 +221,7 @@ const T = {
     strongest: "Based on your priorities, your strongest option is:",
     scoreSummary: "Score Summary",
     baseline: "Stay in current home (no changes)",
-    factorBreakdown: "Factor-by-Factor Breakdown", weight: "Wt", total: "TOTAL",
+    factorBreakdown: "Factor-by-Factor Breakdown", weight: "Importance", total: "TOTAL",
     fundingPreview: "Funding Preview",
     fundingPreviewDesc: "Based on your province, here's an indicative look at what adaptation funding may be available.",
     programs: "Programs:", maxFunding: "Potential max funding:", taxCredits: "Tax credits:",
@@ -217,7 +248,7 @@ const T = {
     welcomeBody: "Cet outil vous aide à réfléchir à une décision importante concernant votre logement — adapter votre maison, déménager, ou explorer d'autres options. Il s'appuie sur le Guide personnel de décision d'Ottawa et la méthode de comparaison pondérée Pugh.",
     welcomeHow: "Comment ça fonctionne :",
     welcomeSteps: ["Clarifiez votre décision — comprenez votre situation et ce qui compte", "Comparez vos options — voyez comment vos choix se mesurent selon vos priorités", "Consultez vos résultats — obtenez un résumé clair à partager"],
-    welcomeTime: "Environ 15–20 minutes. Vos informations restent privées.", welcomeStart: "Commencer", welcomeSkip: "Passer à la comparaison",
+    welcomeTime: "Environ 15–20 minutes. Vos informations restent privées.", welcomeStart: "Commencer",
 
     stage1: "Clarifier votre décision", stage2: "Comparer vos options",
 
@@ -321,7 +352,7 @@ const T = {
     s2_4_title: "Vos résultats", s2_4_purpose: "Voici comment vos options se comparent.",
     strongest: "Votre meilleure option :", scoreSummary: "Scores",
     baseline: "Rester chez moi (sans changement)",
-    factorBreakdown: "Détail par facteur", weight: "Pd", total: "TOTAL",
+    factorBreakdown: "Détail par facteur", weight: "Importance", total: "TOTAL",
     fundingPreview: "Aperçu du financement", fundingPreviewDesc: "Aperçu indicatif du financement disponible.",
     programs: "Programmes :", maxFunding: "Max :", taxCredits: "Crédits :",
     indicative: "Chiffres indicatifs. Confirmez auprès des organismes.",
@@ -354,13 +385,13 @@ const FUNDING = {
 };
 const PK = ["BC","AB","SK","MB","ON","QC","NB","NS","PE","NL","YT","NT","NU"];
 
-const C = { teal:"#1a8a7d",tealDark:"#0f6b61",tealLight:"#e0f2f0",gold:"#d4952b",goldLight:"#fdf3e0",bg:"#fafbfc",card:"#ffffff",text:"#1e2d2f",textMid:"#3d5357",textLight:"#6b8185",border:"#d5dfe1",borderLight:"#e8eef0",pos:"#1a7a3a",posLight:"#e8f5eb",neg:"#b52a2a",negLight:"#fdeaea",white:"#ffffff" };
+const C = { teal:"#1a8a7d",tealDark:"#0f6b61",tealLight:"#e0f2f0",gold:"#d4952b",goldText:"#9c6400",goldLight:"#fdf3e0",bg:"#fafbfc",card:"#ffffff",text:"#1e2d2f",textMid:"#2e3f42",textLight:"#3d5357",border:"#d5dfe1",borderLight:"#e8eef0",pos:"#1a7a3a",posLight:"#e8f5eb",neg:"#b52a2a",negLight:"#fdeaea",white:"#ffffff" };
 const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
 
 function App() {
   const [lang, setLang] = useState("en");
   const t = T[lang];
-  const TOTAL = 11;
+  const TOTAL = 10;
   const [step, setStep] = useState(0);
   const go = s => { setStep(clamp(s,0,TOTAL-1)); window.scrollTo({top:0,behavior:"smooth"}); };
 
@@ -371,6 +402,7 @@ function App() {
   const [province, setProvince] = useState(null);
   const [decisionStage, setDecisionStage] = useState(null);
   const [tenure, setTenure] = useState(null);
+  const [tenureOther, setTenureOther] = useState("");
   const [disabilities, setDisabilities] = useState([]);
   const [condition, setCondition] = useState(null);
   const [progression, setProgression] = useState(null);
@@ -417,29 +449,29 @@ function App() {
   const sPurpose={fontSize:15,color:C.textMid,lineHeight:1.6,marginBottom:24};
   const sCard={background:C.card,borderRadius:14,padding:"24px 28px",border:`1px solid ${C.borderLight}`,marginBottom:20,boxShadow:"0 1px 3px rgba(0,0,0,0.04)"};
   const sCardLabel={fontSize:16,fontWeight:600,color:C.text,marginBottom:12};
-  const sPrimBtn={background:C.teal,color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
-  const sSecBtn={background:"transparent",color:C.teal,border:`2px solid ${C.teal}`,borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:600,cursor:"pointer"};
-  const sGoldBtn={background:C.gold,color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
+  const sPrimBtn={background:C.tealDark,color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
+  const sSecBtn={background:"transparent",color:C.tealDark,border:`2px solid ${C.teal}`,borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:600,cursor:"pointer"};
+  const sGoldBtn={background:"#956500",color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
   const sSel=(on)=>({padding:"11px 18px",borderRadius:10,border:`2px solid ${on?C.teal:C.border}`,background:on?C.tealLight:C.card,color:on?C.tealDark:C.text,cursor:"pointer",fontSize:15,transition:"all 0.15s",fontWeight:on?600:400,textAlign:"left",lineHeight:1.4,width:"100%",display:"block"});
-  const sTag=(on)=>({display:"inline-block",padding:"8px 16px",borderRadius:22,border:`1.5px solid ${on?C.teal:C.border}`,background:on?C.tealLight:C.card,color:on?C.tealDark:C.textLight,cursor:"pointer",fontSize:14,fontWeight:on?600:400,margin:"3px 4px",transition:"all 0.15s"});
+  const sTag=(on)=>({display:"inline-block",padding:"8px 16px",borderRadius:22,border:`1.5px solid ${on?C.teal:"#8fa8ac"}`,background:on?C.tealLight:"#f0f5f6",color:on?C.tealDark:"#2e3f42",cursor:"pointer",fontSize:14,fontWeight:on?600:500,margin:"3px 4px",transition:"all 0.15s"});
   const sInput={width:"100%",padding:"12px 16px",borderRadius:10,border:`1.5px solid ${C.border}`,fontSize:15,outline:"none",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"};
   const sSlider={width:"100%",accentColor:C.teal,height:6};
 
-  const Nav=({canNext=true,onNext,nextLabel})=>(<div style={{display:"flex",justifyContent:"space-between",marginTop:32,gap:12}}>{step>0?<button onClick={()=>go(step-1)} style={sSecBtn}>{t.back}</button>:<div/>}{step<TOTAL-1&&<button onClick={()=>{if(onNext)onNext();go(step+1);}} style={{...sPrimBtn,opacity:canNext?1:0.5}}>{nextLabel||t.next}</button>}</div>);
+  const Nav=({canNext=true,onNext,nextLabel})=>(<div id="nav-buttons" style={{display:"flex",justifyContent:"space-between",marginTop:32,gap:12}}>{step>0?<button onClick={()=>go(step-1)} style={sSecBtn}>{t.back}</button>:<div/>}{step<TOTAL-1&&<button onClick={()=>{if(onNext)onNext();go(step+1);}} style={{...sPrimBtn,opacity:canNext?1:0.5}}>{nextLabel||t.next}</button>}</div>);
   const PersonTabs=()=>forTwo?(<div style={{display:"flex",gap:8,marginBottom:20}}>{[1,2].map(p=>(<button key={p} onClick={()=>setActivePerson(p)} style={{flex:1,padding:"10px 0",borderRadius:10,border:`2px solid ${activePerson===p?C.teal:C.border}`,background:activePerson===p?C.teal:C.card,color:activePerson===p?C.white:C.text,cursor:"pointer",fontWeight:600,fontSize:14}}>{p===1?t.person1:t.person2}</button>))}</div>):null;
-  const Progress=()=>{const sl=step===0?"":step<=6?t.stage1:t.stage2;const pct=step===0?0:(step/(TOTAL-1))*100;return step===0?null:(<div style={{marginBottom:32}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,fontWeight:700,color:C.teal,textTransform:"uppercase",letterSpacing:1.2}}>{sl}</span><span style={{fontSize:12,color:C.textLight}}>{t.step} {step} {t.of} {TOTAL-1}</span></div><div style={{height:5,background:C.borderLight,borderRadius:3}}><div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${C.tealDark},${C.teal})`,borderRadius:3,transition:"width 0.4s"}}/></div></div>);};
-  const CatHeader=({label})=>(<div style={{fontSize:13,fontWeight:700,color:C.teal,textTransform:"uppercase",letterSpacing:1,marginBottom:14,paddingBottom:6,borderBottom:`2px solid ${C.tealLight}`}}>{label}</div>);
+  const Progress=()=>{const sl=step===0?"":step<=5?t.stage1:t.stage2;const pct=step===0?0:(step/(TOTAL-1))*100;return step===0?null:(<div id="progress-bar" style={{marginBottom:32}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,fontWeight:700,color:C.tealDark,textTransform:"uppercase",letterSpacing:1.2}}>{sl}</span><span style={{fontSize:12,color:C.textLight}}>{t.step} {step} {t.of} {TOTAL-1}</span></div><div style={{height:5,background:C.borderLight,borderRadius:3}}><div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${C.tealDark},${C.teal})`,borderRadius:3,transition:"width 0.4s"}}/></div></div>);};
+  const CatHeader=({label})=>(<div style={{fontSize:13,fontWeight:700,color:C.tealDark,textTransform:"uppercase",letterSpacing:1,marginBottom:14,paddingBottom:6,borderBottom:`2px solid ${C.tealLight}`}}>{label}</div>);
   const SRow=({label,value})=>value?(<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.textLight,textTransform:"uppercase",letterSpacing:0.5,marginBottom:3}}>{label}</p><p style={{fontSize:15,color:C.text,whiteSpace:"pre-line"}}>{value}</p></div>):null;
 
   /* ─── SCREENS ─────────────────────────────────────────────────────── */
 
-  const Welcome=()=>(<div style={{maxWidth:600,margin:"0 auto",textAlign:"center",paddingTop:20}}><div style={{width:72,height:72,borderRadius:"50%",background:C.tealLight,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:36}}>🏠</div><h1 style={{fontSize:30,fontWeight:700,color:C.text,marginBottom:12}}>{t.welcomeTitle}</h1><p style={{fontSize:16,color:C.textMid,lineHeight:1.7,marginBottom:24}}>{t.welcomeBody}</p><div style={{textAlign:"left",...sCard}}><p style={{fontWeight:600,marginBottom:10}}>{t.welcomeHow}</p>{t.welcomeSteps.map((s,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:10}}><span style={{width:28,height:28,borderRadius:"50%",background:C.teal,color:C.white,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,flexShrink:0}}>{i+1}</span><span style={{fontSize:15,color:C.textMid,lineHeight:1.5}}>{s}</span></div>))}</div><p style={{fontSize:14,color:C.textLight,marginBottom:28}}>{t.welcomeTime}</p><div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}><button onClick={()=>go(1)} style={{...sPrimBtn,width:"100%",maxWidth:360}}>{t.welcomeStart}</button><button onClick={()=>go(8)} style={{...sSecBtn,width:"100%",maxWidth:360}}>{t.welcomeSkip}</button></div></div>);
+  const Welcome=()=>(<div style={{maxWidth:600,margin:"0 auto",textAlign:"center",paddingTop:20}}><div style={{width:72,height:72,borderRadius:"50%",background:C.tealLight,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:36}}>🏠</div><h1 style={{fontSize:30,fontWeight:700,color:C.text,marginBottom:12}}>{t.welcomeTitle}</h1><p style={{fontSize:16,color:C.textMid,lineHeight:1.7,marginBottom:24}}>{t.welcomeBody}</p><div style={{textAlign:"left",...sCard}}><p style={{fontWeight:600,marginBottom:10}}>{t.welcomeHow}</p>{t.welcomeSteps.map((s,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:10}}><span style={{width:28,height:28,borderRadius:"50%",background:C.teal,color:C.white,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,flexShrink:0}}>{i+1}</span><span style={{fontSize:15,color:C.textMid,lineHeight:1.5}}>{s}</span></div>))}</div><p style={{fontSize:14,color:C.textLight,marginBottom:28}}>{t.welcomeTime}</p><div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}><button onClick={()=>go(1)} style={{...sPrimBtn,width:"100%",maxWidth:360}}>{t.welcomeStart}</button></div></div>);
 
   // 1 — Options & Context (OPTIONS FIRST)
   const S1_1=()=>(<div>
     <h2 style={sH1}>{t.s1_1_title}</h2><p style={sPurpose}>{t.s1_1_purpose}</p>
     <div style={sCard}>
-      {userOptions.map((opt,i)=>(<div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"center"}}><span style={{fontWeight:700,color:C.teal,fontSize:16,minWidth:24}}>{i+1}.</span><input value={opt} onChange={e=>{const n=[...userOptions];n[i]=e.target.value;setUserOptions(n);}} placeholder={t.optionPh} style={{...sInput,flex:1,width:"auto"}}/>{userOptions.length>1&&<button onClick={()=>setUserOptions(userOptions.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:C.neg,fontSize:22,cursor:"pointer"}}>×</button>}</div>))}
+      {userOptions.map((opt,i)=>(<div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"center"}}><span style={{fontWeight:700,color:C.tealDark,fontSize:16,minWidth:24}}>{i+1}.</span><input value={opt} onChange={e=>{const n=[...userOptions];n[i]=e.target.value;setUserOptions(n);}} placeholder={t.optionPh} style={{...sInput,flex:1,width:"auto"}}/>{userOptions.length>1&&<button onClick={()=>setUserOptions(userOptions.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:C.neg,fontSize:22,cursor:"pointer"}}>×</button>}</div>))}
       {userOptions.length<4&&<button onClick={()=>setUserOptions([...userOptions,""])} style={{...sSecBtn,width:"100%",marginTop:4,textAlign:"center",fontSize:14,padding:"10px 0"}}>{t.addOption}</button>}
       <div style={{marginTop:14}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonOpts}</p><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{t.suggestions.map((s,i)=><span key={i} onClick={()=>{const idx=userOptions.findIndex(o=>!o);if(idx>=0){const n=[...userOptions];n[idx]=s;setUserOptions(n);}else if(userOptions.length<4)setUserOptions([...userOptions,s]);}} style={sTag(false)}>{s}</span>)}</div></div>
     </div>
@@ -453,7 +485,7 @@ function App() {
   // 2 — Disability & Tenure
   const S1_2=()=>(<div>
     <h2 style={sH1}>{t.s1_2_title}</h2><p style={sPurpose}>{t.s1_2_purpose}</p>
-    <div style={sCard}><p style={sCardLabel}>{t.tenureQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.tenures.map((v,i)=><button key={i} onClick={()=>setTenure(i)} style={sSel(tenure===i)}>{v}</button>)}</div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.tenureQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.tenures.map((v,i)=><button key={i} onClick={()=>setTenure(i)} style={sSel(tenure===i)}>{v}</button>)}</div>{tenure===4&&<input value={tenureOther} onChange={e=>setTenureOther(e.target.value)} placeholder={lang==="en"?"Please describe your housing situation":"Veuillez décrire votre situation de logement"} style={{...sInput,marginTop:12}}/> }</div>
     <div style={sCard}><p style={sCardLabel}>{t.disabilityQ}</p><p style={{fontSize:13,color:C.textLight,marginBottom:10}}>{t.disabilityNote}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.disabilities.map((d,i)=><button key={i} onClick={()=>toggleArr(disabilities,setDisabilities,i)} style={sSel(disabilities.includes(i))}>{d}</button>)}</div></div>
     {!disabilities.includes(3)&&disabilities.length>0&&(<>
       <div style={sCard}><p style={sCardLabel}>{t.conditionQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.conditionOpts.map((c,i)=><button key={i} onClick={()=>setCondition(i)} style={sSel(condition===i)}>{c}</button>)}</div></div>
@@ -468,7 +500,7 @@ function App() {
   const S1_3=()=>(<div>
     <h2 style={sH1}>{t.s1_3_title}</h2><p style={sPurpose}>{t.s1_3_purpose}</p>
     <div style={sCard}><p style={sCardLabel}>{t.involvedQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.involved.map((v,i)=><button key={i} onClick={()=>toggleArr(involved,setInvolved,i)} style={sSel(involved.includes(i))}>{v}</button>)}</div></div>
-    <div style={sCard}><p style={sCardLabel}>{t.pressureQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.pressures.map((p,i)=><button key={i} onClick={()=>setPressure(i)} style={sSel(pressure===i)}>{p}</button>)}</div>{(pressure===0||pressure===1)&&<p style={{marginTop:12,fontSize:14,color:C.gold,lineHeight:1.5}}>💡 {t.pressureFollowup}</p>}</div>
+    <div style={sCard}><p style={sCardLabel}>{t.pressureQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.pressures.map((p,i)=><button key={i} onClick={()=>setPressure(i)} style={sSel(pressure===i)}>{p}</button>)}</div>{(pressure===0||pressure===1)&&<div style={{marginTop:12,background:C.goldLight,borderRadius:10,padding:"14px 18px"}}><p style={{fontWeight:600,color:C.goldText,fontSize:14,marginBottom:4}}>{"💡 "}{t.pressureFollowup}</p></div>}</div>
     <div style={sCard}><p style={sCardLabel}>{t.forTwoQ}</p><p style={{fontSize:14,color:C.textLight,marginBottom:12}}>{t.forTwoDesc}</p><div style={{display:"flex",gap:10}}><button onClick={()=>setForTwo(true)} style={{...sSel(forTwo),flex:1,textAlign:"center"}}>{t.forTwoYes}</button><button onClick={()=>setForTwo(false)} style={{...sSel(!forTwo),flex:1,textAlign:"center"}}>{t.forTwoNo}</button></div></div>
     <Nav/>
   </div>);
@@ -476,7 +508,7 @@ function App() {
   // 4 — Values
   const catR=[[0,3],[3,5],[5,9],[9,12]];
   const catN=[t.catConnections,t.catMoney,t.catHome,t.catFuture];
-  const S1_4=()=>{const src=activePerson===2?p2Vals:vals;const setSrc=activePerson===2?setP2Vals:setVals;const upd=(i,v)=>{const n=[...src];n[i]=Number(v);setSrc(n);};return(<div><h2 style={sH1}>{t.s1_4_title}</h2><p style={sPurpose}>{t.s1_4_purpose}</p><PersonTabs/>{catN.map((cat,ci)=>(<div key={ci} style={sCard}><CatHeader label={cat}/>{t.values.slice(catR[ci][0],catR[ci][1]).map((v,vi)=>{const idx=catR[ci][0]+vi;return(<div key={idx} style={{marginBottom:22}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:15}}>{v}</span><span style={{fontWeight:700,color:C.teal,fontSize:20,minWidth:28,textAlign:"right"}}>{src[idx]}</span></div><input type="range" min="0" max="5" value={src[idx]} onChange={e=>upd(idx,e.target.value)} style={sSlider}/><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,color:C.textLight}}>{t.notImportant}</span><span style={{fontSize:11,color:C.textLight}}>{t.veryImportant}</span></div></div>);})}</div>))}<Nav/></div>);};
+  const S1_4=()=>{const src=activePerson===2?p2Vals:vals;const setSrc=activePerson===2?setP2Vals:setVals;const upd=(i,v)=>{const n=[...src];n[i]=Number(v);setSrc(n);};return(<div><h2 style={sH1}>{t.s1_4_title}</h2><p style={sPurpose}>{t.s1_4_purpose}</p><PersonTabs/>{catN.map((cat,ci)=>(<div key={ci} style={sCard}><CatHeader label={cat}/>{t.values.slice(catR[ci][0],catR[ci][1]).map((v,vi)=>{const idx=catR[ci][0]+vi;return(<div key={idx} style={{marginBottom:22}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:15}}>{v}</span><span style={{fontWeight:700,color:C.tealDark,fontSize:20,minWidth:28,textAlign:"right"}}>{src[idx]}</span></div><input type="range" min="0" max="5" value={src[idx]} onChange={e=>upd(idx,e.target.value)} style={sSlider}/><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,color:C.textLight}}>{t.notImportant}</span><span style={{fontSize:11,color:C.textLight}}>{t.veryImportant}</span></div></div>);})}</div>))}<Nav/></div>);};
 
   // 5 — Pros & Cons (after Values, before SURE)
   const S2_0 = () => (
@@ -485,7 +517,7 @@ function App() {
       <p style={sPurpose}>{t.s2_0_purpose}</p>
       {validOpts.map((opt, i) => (
         <div key={i} style={{...sCard, borderLeft: `4px solid ${C.teal}`}}>
-          <p style={{fontWeight: 700, fontSize: 18, color: C.teal, marginBottom: 14}}>{i + 1}. {opt}</p>
+          <p style={{fontWeight: 700, fontSize: 18, color: C.tealDark, marginBottom: 14}}>{i + 1}. {opt}</p>
           <div style={{marginBottom: 16}}>
             <p style={{fontSize: 14, fontWeight: 600, color: C.pos, marginBottom: 6}}>{"✓ "}{t.prosLabel}</p>
             <textarea value={prosCons[`${i}-pros`] || ""} onChange={e => setPC(`${i}-pros`, e.target.value)} placeholder={t.prosPh} rows={3} style={sInput} />
@@ -497,7 +529,7 @@ function App() {
         </div>
       ))}
       <div style={{...sCard, borderLeft: `4px solid ${C.gold}`, background: C.goldLight}}>
-        <p style={{fontWeight: 700, fontSize: 16, color: C.gold, marginBottom: 14}}>{"⚓ "}{t.alsoConsider}</p>
+        <p style={{fontWeight: 700, fontSize: 16, color: C.goldText, marginBottom: 14}}>{"⚓ "}{t.alsoConsider}</p>
         <div style={{marginBottom: 16}}>
           <p style={{fontSize: 14, fontWeight: 600, color: C.pos, marginBottom: 6}}>{"✓ "}{t.stayProsLabel}</p>
           <textarea value={prosCons["stay-pros"] || ""} onChange={e => setPC("stay-pros", e.target.value)} placeholder={t.prosPh} rows={3} style={{...sInput, background: C.white}} />
@@ -534,10 +566,10 @@ function App() {
             </div>
             {src[qi] === false && (
               <div style={{marginTop: 12, background: C.goldLight, borderRadius: 10, padding: "14px 18px"}}>
-                <p style={{fontWeight: 600, color: C.gold, fontSize: 14, marginBottom: 8}}>{"💡 "}{t.sureHelp[qi].title}</p>
+                <p style={{fontWeight: 600, color: C.goldText, fontSize: 14, marginBottom: 8}}>{"💡 "}{t.sureHelp[qi].title}</p>
                 {t.sureHelp[qi].tips.map((tip, ti) => (
                   <div key={ti} style={{display: "flex", gap: 8, marginBottom: 6}}>
-                    <span style={{color: C.gold, fontSize: 12, marginTop: 2}}>{"▸"}</span>
+                    <span style={{color: C.goldText, fontSize: 12, marginTop: 2}}>{"▸"}</span>
                     <span style={{fontSize: 14, color: C.textMid, lineHeight: 1.5}}>{tip}</span>
                   </div>
                 ))}
@@ -564,14 +596,14 @@ function App() {
         <p style={{fontSize: 12, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10}}>{t.prosConsReview}</p>
         {validOpts.map((opt, i) => (prosCons[`${i}-pros`] || prosCons[`${i}-cons`]) ? (
           <div key={i} style={{marginBottom: 12, padding: "10px 14px", background: C.bg, borderRadius: 8}}>
-            <p style={{fontWeight: 600, color: C.teal, marginBottom: 4, fontSize: 14}}>{opt}</p>
+            <p style={{fontWeight: 600, color: C.tealDark, marginBottom: 4, fontSize: 14}}>{opt}</p>
             {prosCons[`${i}-pros`] && <p style={{fontSize: 13, marginBottom: 2}}><span style={{color: C.pos, fontWeight: 600}}>{"✓ "}</span>{prosCons[`${i}-pros`]}</p>}
             {prosCons[`${i}-cons`] && <p style={{fontSize: 13}}><span style={{color: C.neg, fontWeight: 600}}>{"✗ "}</span>{prosCons[`${i}-cons`]}</p>}
           </div>
         ) : null)}
         {(prosCons["stay-pros"] || prosCons["stay-cons"]) && (
           <div style={{padding: "10px 14px", background: C.goldLight, borderRadius: 8}}>
-            <p style={{fontWeight: 600, color: C.gold, marginBottom: 4, fontSize: 14}}>{t.stayAsIs}</p>
+            <p style={{fontWeight: 600, color: C.goldText, marginBottom: 4, fontSize: 14}}>{t.stayAsIs}</p>
             {prosCons["stay-pros"] && <p style={{fontSize: 13, marginBottom: 2}}><span style={{color: C.pos, fontWeight: 600}}>{"✓ "}</span>{prosCons["stay-pros"]}</p>}
             {prosCons["stay-cons"] && <p style={{fontSize: 13}}><span style={{color: C.neg, fontWeight: 600}}>{"✗ "}</span>{prosCons["stay-cons"]}</p>}
           </div>
@@ -594,7 +626,7 @@ function App() {
           <SRow label={t.summaryProvince} value={province ? t.provinceFull[PK.indexOf(province)] : null} />
         </div>
         <div style={sCard}>
-          <SRow label={t.summaryTenure} value={tenure !== null ? t.tenures[tenure] : null} />
+          <SRow label={t.summaryTenure} value={tenure !== null ? (tenure === 4 && tenureOther ? `${t.tenures[4]}: ${tenureOther}` : t.tenures[tenure]) : null} />
           <SRow label={t.summaryDisability} value={disabilities.length ? disabilities.map(di => t.disabilities[di]).join("; ") : null} />
           {condition !== null && <SRow label={t.summaryDuration} value={t.conditionOpts[condition]} />}
           {progression !== null && <SRow label={lang === "en" ? "Condition progression" : "\u00c9volution"} value={t.progressions[progression]} />}
@@ -687,7 +719,7 @@ function App() {
           );
         })}
         <div style={{...sCard, background: comp.complete ? C.posLight : C.goldLight, borderLeft: `4px solid ${comp.complete ? C.pos : C.gold}`, textAlign: "center"}}>
-          <p style={{fontWeight: 600, fontSize: 15, color: comp.complete ? C.pos : C.gold}}>
+          <p style={{fontWeight: 600, fontSize: 15, color: comp.complete ? C.pos : C.goldText}}>
             {comp.complete ? t.rateComplete : `${remaining} ${t.rateIncomplete}`}
           </p>
         </div>
@@ -707,7 +739,7 @@ function App() {
           <div style={{marginTop: 20}}><Nav /></div>
         ) : (
           <div style={{...sCard, background: C.goldLight, textAlign: "center", marginTop: 20}}>
-            <p style={{fontSize: 14, color: C.gold, fontWeight: 600}}>{t.rateAllPrompt}</p>
+            <p style={{fontSize: 14, color: C.goldText, fontWeight: 600}}>{t.rateAllPrompt}</p>
             <p style={{fontSize: 13, color: C.textLight, marginTop: 6}}>
               {validOpts.map((o, i) => { const oc = optionCompletion[i]; return oc && oc.complete ? `\u2713 ${o}` : `\u25CB ${o}`; }).join("  \u00B7  ")}
             </p>
@@ -747,7 +779,7 @@ function App() {
         <p style={{fontWeight: 600, fontSize: 16, marginBottom: 16}}>{t.reviewReady}</p>
         <div style={{display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap"}}>
           <button onClick={() => go(1)} style={sSecBtn}>{t.goBackEdit}</button>
-          <button onClick={() => go(10)} style={sGoldBtn}>{t.seeResults}</button>
+          <button onClick={() => go(9)} style={sGoldBtn}>{t.seeResults}</button>
         </div>
       </div>
     </div>
@@ -759,7 +791,7 @@ function App() {
     const maxBar = 180;
     const ri = sureYes >= 4 ? 2 : sureYes >= 2 ? 1 : 0;
     const sSection = {fontSize: 20, fontWeight: 700, color: C.tealDark, marginBottom: 4, marginTop: 36};
-    const sSectionDesc = {fontSize: 14, color: C.textMid, marginBottom: 18, lineHeight: 1.5};
+    const sSectionDesc = {fontSize: 14, color: C.textMid, marginBottom: 10, lineHeight: 1.5};
     return (
       <div>
         <h2 style={sH1}>{t.s2_4_title}</h2>
@@ -773,26 +805,26 @@ function App() {
         <div style={{...sSection, marginTop: 24, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart1}</div>
         <p style={sSectionDesc}>{t.resultsPart1Desc}</p>
 
-        <div style={sCard}>
+        <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}>
           <SRow label={t.summaryOptions} value={validOpts.map((o, i) => `${i + 1}. ${o}`).join("\n") || "\u2014"} />
           <SRow label={t.summaryReasons} value={reasonsText || "\u2014"} />
           <SRow label={t.summaryTimeline} value={timeline !== null ? t.timelines[timeline] : null} />
           <SRow label={t.summaryProvince} value={province ? t.provinceFull[PK.indexOf(province)] : null} />
         </div>
-        <div style={sCard}>
-          <SRow label={t.summaryTenure} value={tenure !== null ? t.tenures[tenure] : null} />
+        <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}>
+          <SRow label={t.summaryTenure} value={tenure !== null ? (tenure === 4 && tenureOther ? `${t.tenures[4]}: ${tenureOther}` : t.tenures[tenure]) : null} />
           <SRow label={t.summaryDisability} value={disabilities.length ? disabilities.map(di => t.disabilities[di]).join("; ") : null} />
           {condition !== null && <SRow label={t.summaryDuration} value={t.conditionOpts[condition]} />}
           {progression !== null && <SRow label={lang === "en" ? "Condition progression" : "\u00c9volution"} value={t.progressions[progression]} />}
           <SRow label={t.summaryIntention} value={intention !== null ? t.intentions[intention] : null} />
           {ownerPerm !== null && <SRow label={t.summaryPermission} value={t.ownerPerms[ownerPerm]} />}
         </div>
-        <div style={sCard}>
+        <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}>
           <SRow label={t.summaryInvolved} value={involved.length ? involved.map(ii => t.involved[ii]).join(", ") : "\u2014"} />
           <SRow label={t.summaryPressure} value={pressure !== null ? t.pressures[pressure] : "\u2014"} />
         </div>
         {topValues.length > 0 && (
-          <div style={sCard}>
+          <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}>
             <p style={{fontSize: 12, fontWeight: 700, color: C.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10}}>{t.summaryTopValues}</p>
             {topValues.map(({v, i: idx}) => (
               <div key={idx} style={{display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: `1px solid ${C.borderLight}`}}>
@@ -803,21 +835,21 @@ function App() {
           </div>
         )}
         <PCCard />
-        <div style={sCard}><SRow label={t.summaryReadiness} value={t.readinessLabels[ri]} /></div>
+        <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}><SRow label={t.summaryReadiness} value={t.readinessLabels[ri]} /></div>
 
         {/* ═══ PART 2: Pugh Structured Comparison ═══ */}
-        <div style={{...sSection, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart2}</div>
+        <div className="print-page-break" style={{...sSection, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart2}</div>
         <p style={sSectionDesc}>{t.resultsPart2Desc}</p>
 
         {bestIdx >= 0 && (
-          <div style={{...sCard, background: C.posLight, borderLeft: `4px solid ${C.pos}`, textAlign: "center", padding: 32}}>
+          <div className="print-no-break" style={{...sCard, background: C.posLight, borderLeft: `4px solid ${C.pos}`, textAlign: "center", padding: 32}}>
             <p style={{fontSize: 14, color: C.textLight, marginBottom: 4}}>{t.strongest}</p>
             <p style={{fontSize: 28, fontWeight: 700, color: C.pos, marginBottom: 4}}>{validOpts[bestIdx]}</p>
             <p style={{fontSize: 36, fontWeight: 800, color: C.pos}}>+{scores[bestIdx]}</p>
           </div>
         )}
 
-        <div style={sCard}>
+        <div className="print-hide" style={sCard}>
           <p style={{fontWeight: 700, fontSize: 18, marginBottom: 18}}>{t.scoreSummary}</p>
           <div style={{marginBottom: 12, display: "flex", alignItems: "center", gap: 10}}>
             <span style={{minWidth: 130, fontSize: 13, textAlign: "right", color: C.textLight}}>{t.baseline}</span>
@@ -843,17 +875,17 @@ function App() {
           })}
         </div>
 
-        <div style={sCard}>
+        <div className="print-no-break" style={sCard}>
           <p style={{fontWeight: 700, fontSize: 18, marginBottom: 14}}>{t.factorBreakdown}</p>
           <div style={{overflowX: "auto"}}>
             <table style={{width: "100%", borderCollapse: "collapse", fontSize: 13}}>
               <thead>
                 <tr style={{borderBottom: `2px solid ${C.border}`}}>
                   <th style={{textAlign: "left", padding: "8px 4px"}}>{lang === "en" ? "Factor" : "Facteur"}</th>
-                  <th style={{padding: "8px 4px", textAlign: "center", width: 36}}>{t.weight}</th>
+                  <th style={{padding: "8px 4px", textAlign: "center", width: 80}}>{t.weight}</th>
                   {validOpts.map((o, i) => (
                     <th key={i} style={{padding: "8px 4px", textAlign: "center"}}>
-                      {o.length > 12 ? o.slice(0, 12) + "\u2026" : o}
+                      {o}
                     </th>
                   ))}
                 </tr>
@@ -891,7 +923,7 @@ function App() {
         </div>
 
         {funding && (
-          <div style={sCard}>
+          <div className="print-page-break print-no-break" style={sCard}>
             <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.fundingPreview}</p>
             <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.fundingPreviewDesc}</p>
             <div style={{background: C.tealLight, borderRadius: 10, padding: 18}}>
@@ -905,7 +937,7 @@ function App() {
         )}
 
         {forTwo && (
-          <div style={sCard}>
+          <div className="print-no-break" style={sCard}>
             <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.forTwoTitle}</p>
             <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.forTwoDesc}</p>
             <table style={{width: "100%", borderCollapse: "collapse", fontSize: 13}}>
@@ -924,7 +956,7 @@ function App() {
                     <tr key={vi} style={{borderBottom: `1px solid ${C.borderLight}`}}>
                       <td style={{padding: "6px 4px", fontSize: 12}}>{v}</td>
                       <td style={{textAlign: "center", fontWeight: 600, color: C.teal}}>{vals[vi]}</td>
-                      <td style={{textAlign: "center", fontWeight: 600, color: C.gold}}>{p2Vals[vi]}</td>
+                      <td style={{textAlign: "center", fontWeight: 600, color: C.goldText}}>{p2Vals[vi]}</td>
                       <td style={{textAlign: "center"}}>
                         <span style={{fontSize: 11, fontWeight: 600,
                           color: diff <= 1 ? C.pos : C.neg,
@@ -941,13 +973,36 @@ function App() {
           </div>
         )}
 
-        <div style={{display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap"}}>
+        <div className="print-page-break" style={{...sCard, borderLeft: `4px solid ${C.teal}`, marginTop: 8}}>
+          <p style={{fontWeight: 700, fontSize: 18, color: C.tealDark, marginBottom: 4}}>{t.s1_5_title}</p>
+          <p style={{fontSize: 14, color: C.textMid, marginBottom: 16, lineHeight: 1.5}}>{t.s1_5_purpose}</p>
+          {t.sureQs.map((q, qi) => (
+            <div key={qi} className="print-no-break" style={{marginBottom: 16}}>
+              <p style={{fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 8}}>{q}</p>
+              <div className="sure-buttons" style={{display: "flex", gap: 10, marginBottom: 6}}>
+                <button onClick={() => { const n = [...sure]; n[qi] = true; setSure(n); }} style={{...sSel(sure[qi] === true), flex: 1, textAlign: "center"}}>{t.yes}</button>
+                <button onClick={() => { const n = [...sure]; n[qi] = false; setSure(n); }} style={{...sSel(sure[qi] === false), flex: 1, textAlign: "center"}}>{t.no}</button>
+              </div>
+              <div className="sure-tip" style={{display: sure[qi] === false ? "block" : "none", background: C.goldLight, borderRadius: 10, padding: "12px 16px"}}>
+                <p style={{fontWeight: 600, color: C.goldText, fontSize: 14, marginBottom: 6}}>{"💡 "}{t.sureHelp[qi].title}</p>
+                {t.sureHelp[qi].tips.map((tip, ti) => (
+                  <div key={ti} style={{display: "flex", gap: 8, marginBottom: 4}}>
+                    <span style={{color: C.goldText, flexShrink: 0}}>{"▸"}</span>
+                    <span style={{fontSize: 13, color: C.textMid, lineHeight: 1.5}}>{tip}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div id="print-buttons" style={{display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap"}}>
           <button onClick={() => window.print()} style={sPrimBtn}>
             {"\uD83D\uDDA8\uFE0F "}{t.exportPdf}
           </button>
           <button onClick={() => {
             setStep(0); setUserOptions([""]); setReasonsText(""); setTimeline(null);
-            setProvince(null); setDecisionStage(null); setTenure(null); setDisabilities([]);
+            setProvince(null); setDecisionStage(null); setTenure(null); setTenureOther(""); setDisabilities([]);
             setCondition(null); setProgression(null); setIntention(null); setOwnerPerm(null);
             setInvolved([]); setPressure(null); setVals(Array(12).fill(0)); setP2Vals(Array(12).fill(0));
             setSure(Array(4).fill(null)); setP2Sure(Array(4).fill(null));
@@ -967,18 +1022,17 @@ function App() {
       case 3: return S1_3();
       case 4: return S1_4();
       case 5: return S2_0();
-      case 6: return S1_5();
-      case 7: return S1_6();
-      case 8: return S2_2();
-      case 9: return S2_3();
-      case 10: return S2_4();
+      case 6: return S1_6();
+      case 7: return S2_2();
+      case 8: return S2_3();
+      case 9: return S2_4();
       default: return Welcome();
     }
   };
 
   return (
     <div style={{minHeight: "100vh", background: C.bg, fontFamily: "'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',sans-serif", color: C.text}}>
-      <div style={{background: C.tealDark, color: C.white, padding: "14px 24px"}}>
+      <div id="app-header" style={{background: C.tealDark, color: C.white, padding: "14px 24px"}}>
         <div style={{maxWidth: 740, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
           <div style={{display: "flex", alignItems: "center", gap: 12}}>
             <div style={{width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20}}>
@@ -995,11 +1049,11 @@ function App() {
           </button>
         </div>
       </div>
-      <div style={{maxWidth: 740, margin: "0 auto", padding: "28px 18px 100px"}}>
+      <div id="app-main" style={{maxWidth: 740, margin: "0 auto", padding: "28px 18px 100px"}}>
         <Progress />
         {renderScreen()}
       </div>
-      <div style={{background: C.tealDark, color: "rgba(255,255,255,0.6)", padding: "14px 24px", textAlign: "center", fontSize: 11, position: "fixed", bottom: 0, left: 0, right: 0}}>
+      <div id="app-footer" style={{background: C.tealDark, color: "rgba(255,255,255,0.6)", padding: "14px 24px", textAlign: "center", fontSize: 11, position: "fixed", bottom: 0, left: 0, right: 0}}>
         {t.tagline} {"\u00B7"} {"\u00A9"} 2026 Home Accessibility Toolkit Project {"\u00B7"} Sunnybrook Research Institute
       </div>
     </div>
