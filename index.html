@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AccessPath Navigator — Home Accessibility Toolkit</title>
+<title>Home Accessibility Toolkit Decision Aid</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; }
@@ -22,7 +22,7 @@
     .print-no-break { page-break-inside: avoid; break-inside: avoid; }
 
     /* Compact cards for print */
-    .print-card { box-shadow: none !important; border: 1px solid #d5dfe1 !important; margin-bottom: 10px !important; padding: 12px 16px !important; }
+    .print-card { box-shadow: none !important; border: 1px solid #D1D5DB !important; margin-bottom: 10px !important; padding: 12px 16px !important; }
 
     /* Force background colors to print */
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -54,13 +54,16 @@ const { useState, useCallback, useMemo } = React;
    ═══════════════════════════════════════════════════════════════════════ */
 const T = {
   en: {
-    title: "AccessPath Navigator", subtitle: "Home Accessibility Toolkit",
+    title: "Home Accessibility Toolkit", subtitle: "Decision Aid",
     tagline: "Navigate your housing decision with confidence", langSwitch: "Français",
     next: "Continue", back: "Back", step: "Step", of: "of",
+    navNeedOption: "Add at least one housing option before continuing.",
+    navNeedValues: "Move at least one slider above 0 so your priorities can be compared.",
+    navNeedValuesBoth: "Both people need to rate at least one factor above 0 before continuing.",
     person1: "Person 1", person2: "Person 2", yes: "Yes", no: "No", unsure: "Not sure",
 
     welcomeTitle: "Making Housing Decisions Easier",
-    welcomeBody: "This tool helps you think through an important housing decision — whether to adapt your current home, move somewhere new, or explore other options. It's built on two trusted frameworks used in Canada and internationally: the Ottawa Personal Decision Guide and the Pugh weighted comparison method.",
+    welcomeBody: "This tool helps you think through an important housing decision — whether to modify your current home, move somewhere new, or explore other options. It's built on two trusted frameworks used in Canada and internationally: the Ottawa Personal Decision Guide and the Pugh weighted comparison method.",
     welcomeHow: "How it works:",
     welcomeSteps: [
       "Clarify your decision — understand what you're facing and what matters to you",
@@ -70,14 +73,34 @@ const T = {
     welcomeTime: "Takes about 15–20 minutes. Your information stays private — nothing is stored.",
     welcomeStart: "Start",
 
+    /* ── HAT Decision Aid landing page ── */
+    landTagline: "A short, guided tool to help you think through housing decisions and move forward with confidence. This tool takes about 15 to 20 minutes to complete.",
+    landHowTitle: "How It Works",
+    landHowSteps: [
+      ["Clarify your decision:", "Name the decision you're facing and your timeline."],
+      ["Explore your options:", "List your choices and what matters most about each."],
+      ["Consider other perspectives:", "See how family or caregivers view the decision."],
+      ["Plan next steps:", "Get guidance based on how ready you feel to decide."],
+    ],
+    landBeforeTitle: "Before You Start",
+    landBeforeBody: "This tool supports your thinking. It is not a substitute for professional advice.",
+    landBeforeBody2: "Your responses are not saved or stored. For your privacy, remember to close your browser window after you finish using the tool.",
+    landSourceTitle: "Where This Tool Comes From",
+    landSourceIntro: "This tool draws on two established decision-support frameworks:",
+    landSource1Name: "Ottawa Personal Decision Guide for Two",
+    landSource1Cite: "© 2025 Stacey, Lewis, O'Connor, Ottawa Hospital Research Institute & University of Ottawa, Canada (with J Finderup, S Kienlin, J Persson Kylen).",
+    landSource2Name: "Should I Adapt or Move? (DFG Decision Maker)",
+    landSource2Cite: "Paul Smith, © 2025 Foundations, UK.",
+    landDisclaimer: "For educational purposes only. Not a substitute for professional advice.",
+
     stage1: "Clarify Your Decision", stage2: "Compare Your Options",
 
     // 1.1 — Options & Context
     s1_1_title: "What housing options are you considering?",
     s1_1_purpose: "Let's start with the options on your mind. Name up to 4 — these will be compared later using a structured method.",
-    optionPh: "e.g., Adapt my home, Move to a condo...",
+    optionPh: "e.g., Modify my home, Move to a condo...",
     addOption: "+ Add another option",
-    suggestions: ["Adapt my current home", "Move to a smaller home or condo", "Move to accessible housing", "Move to assisted living", "Move in with family", "Move to a different community"],
+    suggestions: ["Modify my current home", "Move to a smaller home or condo", "Move to accessible housing", "Move to assisted living", "Move in with family", "Move to a different community"],
     commonOpts: "Common options:",
     reasonsQ: "What are your reasons for considering a change?",
     reasonsPh: "e.g., I had a fall last month, my mobility is changing, the house needs repairs...",
@@ -155,7 +178,7 @@ const T = {
     ],
     sureHelp: [
       { title: "Learn more about your options", tips: ["Ask your doctor or occupational therapist about options for your situation", "Contact your provincial housing authority to learn about available programs", "Talk to others who have faced a similar decision", "Visit homeaccessibilitytoolkit.com for resources on home modifications"] },
-      { title: "Clarify what matters most", tips: ["Review the values you rated in the previous step — which scored highest?", "Talk to people who have experienced both adapting and moving", "Think about what you'd regret most: staying in a home that doesn't work, or leaving a home you love?", "Consider both short-term disruption and long-term benefit"] },
+      { title: "Clarify what matters most", tips: ["Review the values you rated in the previous step — which scored highest?", "Talk to people who have experienced both modifying and moving", "Think about what you'd regret most: staying in a home that doesn't work, or leaving a home you love?", "Consider both short-term disruption and long-term benefit"] },
       { title: "Find support for your decision", tips: ["Ask for a referral to an occupational therapist for a home assessment", "Contact a local disability or seniors' organization for guidance", "Share this tool with someone you trust and complete it together (For Two mode)", "If you feel pressured, a counsellor or social worker can help you navigate that"] },
       { title: "It's okay not to feel sure yet", tips: ["The comparison in Stage 2 is specifically designed to help with this", "Sometimes seeing the numbers helps make the right choice clearer", "You don't have to decide today — use the results to guide conversations", "You can come back and redo this tool anytime as your thinking evolves"] },
     ],
@@ -170,6 +193,7 @@ const T = {
     summaryProvince: "Province / Territory:", summaryInvolved: "People involved:",
     summaryPressure: "Pressure:", summaryTopValues: "What matters most to you:",
     summaryReadiness: "Readiness to decide:", summaryTenure: "Housing situation:",
+    summaryPreparation: "Decision-making needs:", notAnswered: "Not answered",
     summaryDisability: "Disability:", summaryDuration: "Condition duration:",
     summaryIntention: "Intention to stay:", summaryPermission: "Owner permission:",
     readinessLabels: ["Not yet explored", "Getting there", "Well-prepared"],
@@ -192,16 +216,13 @@ const T = {
     notImp: "0", veryImp: "10",
     factors: ["Staying close to friends & social life", "Staying close to family", "Access to shops, services & transit", "Weekly / monthly cost of living", "Equity / financial value of home", "Difficulty & stress of making a change", "Ease of maintaining and cleaning the home", "Pride & comfort in the home", "Control over how I live day to day", "Home suitability as my needs change", "Cultural & community connections", "Availability of funding support"],
     factorCats: ["Connections","Connections","Connections","Money & Security","Money & Security","Home & Practicalities","Home & Practicalities","Home & Practicalities","Independence & Future","Independence & Future","Independence & Future","Funding"],
-    baselineNote: "All options will be compared against staying in your current home without making any changes",
 
     // 2.2 — Rate
     s2_2_title: "Rate Each Option Against Your Current Situation",
-    s2_2_purpose: "Think about your life in your current home right now, without any changes made. For each factor below, ask yourself: if I chose this option instead, would things get worse, stay the same, or get better compared to how they are today?",
     ratingInstruction: "You are rating:",
-    ratingCompare: "Ask yourself: \"Compared to how things are for me RIGHT NOW in my current home, with no changes made, would this option be...\"",
+    ratingCompare: "For each factor below, would this option be better or worse than staying in your current home with no changes?",
     ratings: ["Much Worse", "Worse", "About the Same", "Better", "Much Better"],
     ratingScores: [-2, -1, 0, 1, 2],
-    ratingHint: "← worse than now (no changes) | same as now | better than now →",
     rateAllPrompt: "Please rate all your options before viewing results.",
     rateComplete: "✓ All factors rated",
     rateIncomplete: "factors remaining",
@@ -223,9 +244,21 @@ const T = {
     baseline: "Stay in current home (no changes)",
     factorBreakdown: "Factor-by-Factor Breakdown", weight: "Importance", total: "TOTAL",
     fundingPreview: "Funding Preview",
-    fundingPreviewDesc: "Based on your province, here's an indicative look at what adaptation funding may be available.",
-    programs: "Programs:", maxFunding: "Potential max funding:", taxCredits: "Tax credits:",
-    indicative: "These are indicative figures only. Confirm with administering organizations.",
+    fundingPreviewDesc: "Programs that may help pay for home modifications, equipment, or income support. Select a program name to visit its website. Amounts and eligibility rules vary. Confirm current details with the administering organization. Last reviewed: August 2026.",
+    fundingRegional: "Programs in",
+    fundingNational: "Canada-wide Programs",
+    fundingSections: {
+      npo: "Not-for-profit organizations",
+      gds: "Government disability supports",
+      ins: "Insurance and disability income supports",
+      prov: "Provincial funding programs",
+      terr: "Territory-wide funding programs",
+      city: "City and region-specific programs",
+      cond: "Condition-specific programs",
+      ftax: "Federal tax credits",
+      fgrant: "Federal grant programs",
+      other: "Other programs",
+    },
     prosConsReview: "Your Pros & Cons Notes",
     forTwoTitle: "Side-by-Side: How You and Person 2 Compare",
     forTwoDesc: "Where your values align and where they differ.",
@@ -236,26 +269,56 @@ const T = {
     resultsPart1Desc: "A summary of everything you shared about your situation, values, and initial thinking.",
     resultsPart2: "Part 2: Structured Comparison (Pugh Analysis)",
     resultsPart2Desc: "How your options scored when weighted against what matters most to you.",
-    disclaimer: "This tool supports reflection and conversation — it does not make decisions for you and is not professional advice. Confirm all program details with administering organizations before applying.",
+    resultsScoringLead: "Every option is measured against staying in your current home with no changes.",
+    resultsLegend: [
+      ["+", "Better than now", "stronger overall on the factors most important to you"],
+      ["\u2212", "Worse than now", "weaker overall on those same factors"],
+      ["0", "About the same", "little difference from your current home"],
+    ],
+    resultsScoreRange: "Based on what matters most to you, scores can range from {min} to {max}.",
+    disclaimer: "This tool supports reflection and conversation, it does not make decisions for you and is not a substitute for professional advice.",
   },
   fr: {
-    title: "AccessPath Navigateur", subtitle: "Boîte à outils d'accessibilité domiciliaire",
+    title: "Boîte à outils d'accessibilité domiciliaire", subtitle: "Aide à la décision",
     tagline: "Naviguez votre décision de logement avec confiance", langSwitch: "English",
     next: "Continuer", back: "Retour", step: "Étape", of: "de",
+    navNeedOption: "Ajoutez au moins une option de logement avant de continuer.",
+    navNeedValues: "Déplacez au moins un curseur au-dessus de 0 afin que vos priorités puissent être comparées.",
+    navNeedValuesBoth: "Les deux personnes doivent évaluer au moins un facteur au-dessus de 0 avant de continuer.",
     person1: "Personne 1", person2: "Personne 2", yes: "Oui", no: "Non", unsure: "Pas sûr(e)",
 
     welcomeTitle: "Faciliter les décisions de logement",
-    welcomeBody: "Cet outil vous aide à réfléchir à une décision importante concernant votre logement — adapter votre maison, déménager, ou explorer d'autres options. Il s'appuie sur le Guide personnel de décision d'Ottawa et la méthode de comparaison pondérée Pugh.",
+    welcomeBody: "Cet outil vous aide à réfléchir à une décision importante concernant votre logement — modifier votre maison, déménager, ou explorer d'autres options. Il s'appuie sur le Guide personnel de décision d'Ottawa et la méthode de comparaison pondérée Pugh.",
     welcomeHow: "Comment ça fonctionne :",
     welcomeSteps: ["Clarifiez votre décision — comprenez votre situation et ce qui compte", "Comparez vos options — voyez comment vos choix se mesurent selon vos priorités", "Consultez vos résultats — obtenez un résumé clair à partager"],
     welcomeTime: "Environ 15–20 minutes. Vos informations restent privées.", welcomeStart: "Commencer",
+
+    /* ── Page d'accueil de l'Aide à la décision ── */
+    landTagline: "Un outil guidé et concis pour vous aider à réfléchir à vos décisions en matière de logement et à aller de l'avant en toute confiance. Cet outil prend environ 15 à 20 minutes à remplir.",
+    landHowTitle: "Comment ça fonctionne",
+    landHowSteps: [
+      ["Clarifiez votre décision :", "Nommez la décision à prendre et votre échéancier."],
+      ["Explorez vos options :", "Énumérez vos choix et ce qui compte le plus pour chacun."],
+      ["Tenez compte des autres points de vue :", "Voyez comment votre famille ou vos proches aidants perçoivent la décision."],
+      ["Planifiez les prochaines étapes :", "Obtenez des conseils selon votre degré de préparation à décider."],
+    ],
+    landBeforeTitle: "Avant de commencer",
+    landBeforeBody: "Cet outil soutient votre réflexion. Il ne remplace pas un avis professionnel.",
+    landBeforeBody2: "Vos réponses ne sont ni enregistrées ni conservées. Par souci de confidentialité, pensez à fermer la fenêtre de votre navigateur après avoir utilisé l'outil.",
+    landSourceTitle: "D'où vient cet outil",
+    landSourceIntro: "Cet outil s'appuie sur deux cadres reconnus d'aide à la décision :",
+    landSource1Name: "Guide personnel d'aide à la décision d'Ottawa pour deux personnes",
+    landSource1Cite: "© 2025 Stacey, Lewis, O'Connor, Institut de recherche de l'Hôpital d'Ottawa et Université d'Ottawa, Canada (avec J Finderup, S Kienlin, J Persson Kylen).",
+    landSource2Name: "Should I Adapt or Move? (DFG Decision Maker)",
+    landSource2Cite: "Paul Smith, © 2025 Foundations, Royaume-Uni.",
+    landDisclaimer: "À des fins éducatives seulement. Ne remplace pas un avis professionnel.",
 
     stage1: "Clarifier votre décision", stage2: "Comparer vos options",
 
     s1_1_title: "Quelles options de logement envisagez-vous?",
     s1_1_purpose: "Commençons par les options auxquelles vous pensez. Nommez-en jusqu'à 4 — elles seront comparées plus tard.",
-    optionPh: "ex. : Adapter ma maison, Déménager en condo...", addOption: "+ Ajouter une option",
-    suggestions: ["Adapter ma maison actuelle", "Déménager dans un logement plus petit", "Déménager dans un logement accessible", "Déménager en résidence avec services", "Emménager avec la famille", "Déménager dans une autre communauté"],
+    optionPh: "ex. : Modifier ma maison, Déménager en condo...", addOption: "+ Ajouter une option",
+    suggestions: ["Modifier ma maison actuelle", "Déménager dans un logement plus petit", "Déménager dans un logement accessible", "Déménager en résidence avec services", "Emménager avec la famille", "Déménager dans une autre communauté"],
     commonOpts: "Options courantes :",
     reasonsQ: "Quelles sont vos raisons d'envisager un changement?",
     reasonsPh: "ex. : Chute récente, mobilité qui change, réparations nécessaires...",
@@ -315,7 +378,8 @@ const T = {
     s1_6_title: "Résumé", s1_6_purpose: "Voici un récapitulatif avant la comparaison structurée.",
     summaryReasons: "Vos raisons :", summaryTimeline: "Échéancier :", summaryOptions: "Options :",
     summaryProvince: "Province :", summaryInvolved: "Personnes impliquées :", summaryPressure: "Pression :",
-    summaryTopValues: "Ce qui compte le plus :", summaryReadiness: "Préparation :",
+    summaryTopValues: "Ce qui compte le plus :", summaryReadiness: "Où en êtes-vous :",
+    summaryPreparation: "Besoins décisionnels :", notAnswered: "Sans réponse",
     summaryTenure: "Situation de logement :", summaryDisability: "Handicap :",
     summaryDuration: "Durée de la condition :", summaryIntention: "Intention de rester :",
     summaryPermission: "Permission du propriétaire :",
@@ -334,12 +398,10 @@ const T = {
     notImp: "0", veryImp: "10",
     factors: ["Proximité des amis", "Proximité de la famille", "Accès aux services", "Coût de la vie", "Valeur financière", "Stress du changement", "Facilité d'entretien", "Fierté et confort", "Contrôle quotidien", "Adéquation future", "Liens culturels", "Soutien financier"],
     factorCats: ["Relations","Relations","Relations","Argent","Argent","Maison","Maison","Maison","Avenir","Avenir","Avenir","Financement"],
-    baselineNote: "Toutes les options seront comparées à votre situation actuelle sans aucun changement",
 
-    s2_2_title: "Évaluez chaque option", s2_2_purpose: "Pensez à votre vie actuelle dans votre maison, sans aucun changement. Si vous choisissiez cette option, les choses iraient-elles moins bien, pareilles, ou mieux?",
-    ratingInstruction: "Vous évaluez :", ratingCompare: "Demandez-vous : « Par rapport à ma situation ACTUELLE, sans aucun changement, est-ce que ce serait... »",
+    s2_2_title: "Évaluez chaque option",
+    ratingInstruction: "Vous évaluez :", ratingCompare: "Pour chaque facteur ci-dessous, cette option serait-elle meilleure ou pire que de rester dans votre logement actuel sans aucun changement ?",
     ratings: ["Bien pire", "Pire", "Pareil", "Mieux", "Bien mieux"], ratingScores: [-2, -1, 0, 1, 2],
-    ratingHint: "← pire que maintenant (sans changement) | pareil | mieux →",
     rateAllPrompt: "Veuillez évaluer toutes vos options avant de voir les résultats.",
     rateComplete: "✓ Tous les facteurs évalués", rateIncomplete: "facteurs restants",
     rateNextOption: "Suivant : Évaluer", ratePrevOption: "Précédent :",
@@ -353,9 +415,22 @@ const T = {
     strongest: "Votre meilleure option :", scoreSummary: "Scores",
     baseline: "Rester chez moi (sans changement)",
     factorBreakdown: "Détail par facteur", weight: "Importance", total: "TOTAL",
-    fundingPreview: "Aperçu du financement", fundingPreviewDesc: "Aperçu indicatif du financement disponible.",
-    programs: "Programmes :", maxFunding: "Max :", taxCredits: "Crédits :",
-    indicative: "Chiffres indicatifs. Confirmez auprès des organismes.",
+    fundingPreview: "Aperçu du financement",
+    fundingPreviewDesc: "Programmes pouvant aider à payer les modifications domiciliaires, l'équipement ou le soutien du revenu. Sélectionnez le nom d'un programme pour consulter son site Web. Les montants et les critères d'admissibilité varient. Confirmez les détails auprès de l'organisme responsable. Dernière révision : août 2026.",
+    fundingRegional: "Programmes en",
+    fundingNational: "Programmes pancanadiens",
+    fundingSections: {
+      npo: "Organismes sans but lucratif",
+      gds: "Soutiens gouvernementaux aux personnes handicapées",
+      ins: "Assurance et soutiens du revenu d'invalidité",
+      prov: "Programmes de financement provinciaux",
+      terr: "Programmes de financement territoriaux",
+      city: "Programmes municipaux et régionaux",
+      cond: "Programmes selon la condition",
+      ftax: "Crédits d'impôt fédéraux",
+      fgrant: "Programmes de subventions fédéraux",
+      other: "Autres programmes",
+    },
     prosConsReview: "Vos notes", forTwoTitle: "Côte à côte", forTwoDesc: "Alignement et différences.",
     agree: "D'accord", disagree: "Différent", pros: "Pour", cons: "Contre",
     stayAsIs: "Rester (sans changement)",
@@ -364,28 +439,54 @@ const T = {
     resultsPart1Desc: "Un résumé de tout ce que vous avez partagé sur votre situation, vos valeurs et vos réflexions initiales.",
     resultsPart2: "Partie 2 : Comparaison structurée (analyse Pugh)",
     resultsPart2Desc: "Comment vos options se sont classées selon ce qui compte le plus pour vous.",
-    disclaimer: "Cet outil soutient la réflexion — pas un avis professionnel. Confirmez auprès des organismes.",
+    resultsScoringLead: "Chaque option est comparée au fait de rester dans votre logement actuel sans aucun changement.",
+    resultsLegend: [
+      ["+", "Mieux qu'aujourd'hui", "globalement plus fort sur les facteurs qui comptent le plus pour vous"],
+      ["\u2212", "Moins bien qu'aujourd'hui", "globalement plus faible sur ces mêmes facteurs"],
+      ["0", "À peu près pareil", "peu de différence avec votre logement actuel"],
+    ],
+    resultsScoreRange: "Selon ce qui compte le plus pour vous, les scores peuvent aller de {min} à {max}.",
+    disclaimer: "Cet outil soutient la réflexion et la discussion; il ne décide pas à votre place et ne remplace pas un avis professionnel.",
   },
 };
 
 const FUNDING = {
-  BC:{programs:["BC RAHA"],max:"$17,500–$20,000",tax:"$3,000 HATC + $1,000 BC credit"},
-  AB:{programs:["RAMP","SHARP"],max:"$24,000–$55,000",tax:"$3,000 HATC"},
-  SK:{programs:["Adaptation for Independence","MN–S DAP (Métis)"],max:"$23,000–$41,000",tax:"$3,000 HATC"},
-  MB:{programs:["Safe & Healthy Home (65+)"],max:"$15,000",tax:"$3,000 HATC"},
-  ON:{programs:["HVMP","Ontario Renovates (varies)"],max:"$15,000–$40,000",tax:"$3,000 HATC"},
-  QC:{programs:["PAD (currently suspended)"],max:"$50,000 (if reinstated)",tax:"$3,000 HATC + QC credits"},
-  NB:{programs:["Housing Assistance (Disability)"],max:"$10,000–$20,000",tax:"$3,000 HATC"},
-  NS:{programs:["Housing Repair & Accessibility"],max:"$38,000",tax:"$3,000 HATC"},
-  PE:{programs:["Home Renovation (Disability)"],max:"$16,000",tax:"$3,000 HATC"},
-  NL:{programs:["Home Modification Program"],max:"$17,500",tax:"$3,000 HATC"},
-  YT:{programs:["Accessibility Grant"],max:"$30,000",tax:"$3,000 HATC"},
-  NT:{programs:["Mobility Modifications"],max:"$50,000",tax:"$3,000 HATC"},
-  NU:{programs:["Home Renovation Program"],max:"$100,000",tax:"$3,000 HATC"},
+  BC: [{s:"ins",p:"Auto Insurance - Insurance Corporation of British Columbia (ICBC)",a:"Varies by household - up to $11,872 per month (for catastrophic injuries requiring 24/7 care)",t:"Insurance Benefit",u:"https://www.icbc.com/"},{s:"ins",p:"Disability Assistance (BC Employment & Assistance)",a:"Varies by household - up to $1,483.50 per month + health benefits",t:"Ongoing Income Benefit",u:"https://www2.gov.bc.ca/gov/content/family-social-supports/services-for-people-with-disabilities/disability-assistance"},{s:"prov",p:"BC Rebate for Accessible Home Adaptations (BC RAHA)",a:"Varies by household - up to $20,000",t:"Grant",u:"https://www.bchousing.org/housing-assistance/BC-RAHA"},{s:"prov",p:"Home Renovation Tax Credit for Seniors and Persons with Disabilities",a:"Varies by household - up to $1,000 (10% of $10,000 expenses)",t:"Refundable Tax Credit",u:"https://www2.gov.bc.ca/gov/content/taxes/income-taxes/personal/credits/seniors-renovation"},{s:"prov",p:"BC Rehab Foundation - Individual Grant Application",a:"Varies",t:"Grant",u:"https://bcrehab.com/applications/individual-grant/"}],
+  AB: [{s:"gds",p:"Assured Income for the Severely Handicapped (AISH)",a:"Varies by household - up to $1,940 per month",t:"Ongoing Income Benefit",u:"https://www.alberta.ca/aish"},{s:"prov",p:"Seniors Home Adaptation and Repair Program (SHARP)",a:"Varies by household - up to $40,000 (loan)",t:"Grant & Loan",u:"https://www.alberta.ca/seniors-home-adaptation-repair-program"},{s:"prov",p:"Residential Access Modification Program (RAMP)",a:"Varies by household - up to $12,000 per year (max $24,000/10 years)",t:"Grant",u:"https://www.alberta.ca/residential-access-modification-program"},{s:"prov",p:"Alberta Aids to Daily Living (AADL)",a:"Varies (equipment-based funding; up to $500 annual client contribution cap)",t:"Equipment or Device Support",u:"https://www.alberta.ca/alberta-aids-to-daily-living"},{s:"prov",p:"Accessibility Supports - Easter Seals Alberta",a:"Up to $5,000",t:"Grant",u:"https://easterseals.ab.ca/"},{s:"prov",p:"Equipment Loan Program - Alberta Health Services",a:"Covered under public healthcare (AHCIP)",t:"Equipment or Device Support",u:"https://www.albertahealthservices.ca/findhealth/service.aspx?Id=5198"},{s:"prov",p:"Métis Capital Housing Corporation - Home Repair Assistance Program",a:"Varies by household - up to $20,000",t:"Forgivable Loan",u:"https://www.metishousing.ca/programs/home-programs/home-repair-assistance/"}],
+  SK: [{s:"ins",p:"Auto Insurance - Saskatchewan Government Insurance (SGI)",a:"90% of net income up to a maximum salary of $119,692",t:"Insurance Benefit",u:"https://sgi.sk.ca/"},{s:"gds",p:"Saskatchewan Assured Income for Disability (SAID)",a:"Varies",t:"Ongoing Income Benefit",u:"https://www.saskatchewan.ca/residents/family-and-social-support/people-with-disabilities/income-support-for-people-with-disabilities"},{s:"prov",p:"Home Repair Program - Adaptation for Independence",a:"Varies by household -up to $23,000",t:"Forgivable Loan",u:"https://www.saskatchewan.ca/residents/housing-and-renting/home-repairs-and-renovations/adapt-a-home-for-a-person-with-a-disability"},{s:"prov",p:"Saskatchewan Aids to Independent Living (SAIL)",a:"Varies (equipment-based coverage)",t:"Equipment or Device Support",u:"https://www.saskatchewan.ca/residents/health/accessing-health-care-services/health-services-for-people-with-disabilities/sail"},{s:"prov",p:"Kinsmen Foundation (TeleMiracle)",a:"Varies (can exceed $50,000 depending on need)",t:"Grant",u:"https://telemiracle.com/kinsmen-foundation/"},{s:"prov",p:"The Métis Nation-Saskatchewan Disability Adaptation Program",a:"Varies by household -up to $15,000 (for South/Central citizens) and $18,000 (for Northern citizens)",t:"Forgivable Loan",u:"https://mns.ca/services-and-programs/applications/disability-adaptation-program"}],
+  MB: [{s:"ins",p:"Manitoba Public Insurance (MPI)",a:"Varies - 90% of net income (maximum insurable income $123,000, effective April 1, 2026)",t:"Insurance Benefit",u:"https://www.mpi.mb.ca/"},{s:"ins",p:"Manitoba Supports for Persons with Disabilities",a:"Varies by household",t:"Ongoing Income Benefit",u:"https://www.gov.mb.ca/fs/manitobasupports/index.html"},{s:"prov",p:"Employment and Income Assistance (EIA) - Disability Supports",a:"Varies by household",t:"Ongoing Income Benefit",u:"https://www.gov.mb.ca/fs/eia/"},{s:"prov",p:"Access to Benefits - Financial Empowerment Program",a:"Matched savings (varies)",t:"Services",u:"https://www.manitobapossible.ca/financial-empowerment"},{s:"prov",p:"Manitoba Safe and Healthy Home for Seniors (SHHS) - March of Dimes",a:"Up to $5,000 (non-rural) or $6,500 (rural/remote)",t:"Grant",u:"https://www.marchofdimes.ca/en-ca/programs/am/mshhs"}],
+  ON: [{s:"npo",p:"March of Dimes - Home and Vehicle Modification Program (HVMP)",a:"Varies by household - up to $15,000 (home modifications)",t:"Grant",u:"https://www.marchofdimes.ca/en-ca/programs/am/hvmp"},{s:"gds",p:"Ontario Disability Support Program (ODSP)",a:"Varies by household - up to $1,436 per month",t:"Ongoing Income Benefit",u:"https://www.ontario.ca/page/ontario-disability-support-program"},{s:"prov",p:"Enhancing Access to Spaces for Everyone (EASE) Grant",a:"Up to $60,000",t:"Grant",u:"https://www.ontario.ca/page/enhancing-access-spaces-everyone-ease-grant"},{s:"prov",p:"Ontario Renovates Program",a:"Varies by location",t:"Forgivable Loan",u:"https://www.ontario.ca/page/find-your-local-service-manager"},{s:"prov",p:"Assistive Devices Program (ADP) - Government of Ontario",a:"Covers 75% of approved price",t:"Equipment or Device Support",u:"https://www.ontario.ca/page/assistive-devices-program"},{s:"city",p:"City of Ottawa - Essential Health and Social Supports (EHSS) Program",a:"Varies",t:"Grant",u:"https://ottawa.ca/en/family-and-social-services/financial-and-social-assistance/apply-financial-assistance?page=3008331"},{s:"city",p:"Toronto Employment & Social Services - Medical Items, Devices & Supplies",a:"Covers 75%-100% assistive devices",t:"Equipment or Device Support",u:"https://www.toronto.ca/community-people/employment-social-support/health-support/medical-supplies-and-devices/"}],
+  QC: [{s:"npo",p:"Fondation Elan",a:"Varies",t:"Grant",u:"https://fondationelan.com/fondation/"},{s:"npo",p:"Mobilis",a:"Varies",t:"Grant",u:"https://fondationmobilis.com/"},{s:"ins",p:"SAAQ - Société de l'assurance automobile du Québec",a:"Varies by household -up to $1,745 per week",t:"Insurance Benefit",u:"https://saaq.gouv.qc.ca/"},{s:"ins",p:"Social Solidarity Program / Basic Income Program (BIP)",a:"Varies by household - up to $1,336 per month ($16,032 per year)",t:"Ongoing Income Benefit",u:"https://www.quebec.ca/en/family-and-support-for-individuals/social-assistance-social-solidarity/basic-income-program"},{s:"prov",p:"Residential Adaptation Assistance Program",a:"Varies",t:"Grant",u:"https://www.habitation.gouv.qc.ca/english/detail-du-programme-english/programme/residential-adaptation-assistance-program"},{s:"prov",p:"Independent Living Tax Credit for Seniors",a:"20% of eligible expenses (after first $250)",t:"Refundable Tax Credit",u:"https://www.revenuquebec.ca/en/citizens/tax-credits/independent-living-tax-credit-for-seniors/"}],
+  NB: [{s:"gds",p:"Extended Benefits Program (Social Assistance)",a:"Varies",t:"Ongoing Income Benefit",u:"https://www2.gnb.ca/content/gnb/en/departments/social_development/persons_disabilities.html"},{s:"gds",p:"Portable Rent Supplement Program",a:"Varies",t:"Ongoing Income Benefit",u:"https://www.gnb.ca/en/topic/family-home-community/housing-property/portable-rent.html"},{s:"gds",p:"Homeowner Repair Program",a:"Varies by household - up to $10,000",t:"Forgivable Loan",u:"https://www.gnb.ca/en/topic/family-home-community/housing-property/home-repair.html"},{s:"gds",p:"Housing Assistance for Persons with Disabilities",a:"Varies by household - up to $10,000",t:"Forgivable Loan",u:"https://www2.gnb.ca/content/gnb/en/services/services_renderer.19576.Housing_Assistance_for_Persons_with_Disabilities.html"},{s:"gds",p:"New Brunswick Home Improvement Plan - CGP&H (Community Grants, Planning & Housing)",a:"Varies by household - up to $30,000",t:"Grant",u:"https://hip.cgph.net/new-brunswick-home-improvement-program/"},{s:"gds",p:"New Brunswick Seniors' Home Renovation Tax Credit",a:"Varies by household - up to $1,000 per year (10% of $10,000 expenses)",t:"Refundable Tax Credit",u:"https://www2.gnb.ca/content/gnb/en/departments/finance/promo/renovation.html"}],
+  NS: [{s:"gds",p:"Disability Support Program (DSP)",a:"Varies",t:"Services & Ongoing Income Benefit",u:"https://novascotia.ca/coms/disabilities/index.html"},{s:"gds",p:"Employment Support and Income Assistance (ESIA)",a:"Varies by household",t:"Ongoing Income Benefit",u:"https://novascotia.ca/coms/employment/index.html"},{s:"prov",p:"Housing Repair and Accessibility Program - Government of Nova Scotia",a:"Varies by household - up to $18,000",t:"Grant & Forgivable Loan",u:"https://www.novascotia.ca/accessible-housing-program"}],
+  PE: [{s:"gds",p:"AccessAbility Supports Program",a:"Varies",t:"Ongoing Income Benefit & Services",u:"https://www.princeedwardisland.ca/en/information/social-development-and-seniors/accessability-supports"},{s:"prov",p:"PEI Home Renovation Program",a:"Varies by household -up to $16,000",t:"Grant",u:"https://www.princeedwardisland.ca/en/service/pei-home-renovation-programs"},{s:"prov",p:"Seniors Safe @ Home Program",a:"Varies by household - up to $10,000",t:"Grant",u:"https://www.princeedwardisland.ca/sites/default/files/forms/seniorssafehomeprog-web_version.pdf"}],
+  NL: [{s:"gds",p:"Newfoundland and Labrador Disability Benefit (NLDB)",a:"Varies by household - up to $400 per month ($4,800 annually) for those eligible",t:"Ongoing Income Benefit",u:"https://www.gov.nl.ca/sswb/newfoundland-and-labrador-disability-benefit/"},{s:"prov",p:"Home Modification Program (HMP) - NLHC",a:"Varies by household - up to $7,500",t:"Forgivable Loan",u:"https://www.nlhc.nl.ca/housing-programs/home-modification-program-hmp/"}],
+  YT: [{s:"gds",p:"Social Assistance Program - Yukon Supplementary Allowance (YSA)",a:"$250 per month",t:"Ongoing Income Benefit",u:"https://yukon.ca/en/legal-and-social-supports/supports-adults-and-seniors/apply-allowance-supplement-your-social"},{s:"terr",p:"Home Repair Program - Accessibility Grant",a:"Varies",t:"Grant",u:"https://yukon.ca/en/housing-and-property/funding-and-loans/apply-loan-repair-your-home"}],
+  NT: [{s:"gds",p:"Income Assistance for Seniors and Persons with Disabilities",a:"Varies",t:"Ongoing Income Benefit",u:"https://www.ece.gov.nt.ca/en/services/income-security-programs/income-assistance-seniors-and-persons-disabilities"},{s:"terr",p:"Seniors Aging in Place Program",a:"Up to $15,000 per year",t:"Forgivable Loan",u:"https://www.nwthc.gov.nt.ca/en/services/seniors-aging-place"},{s:"terr",p:"Mobility Modifications Program",a:"Varies by household - up to $50,000",t:"Forgivable Loan",u:"https://www.nwthc.gov.nt.ca/en/services/mobility-modifications"}],
+  NU: [{s:"gds",p:"Income Assistance Program (Disability Support)",a:"$175 per month",t:"Ongoing Income Benefit",u:"https://www.gov.nu.ca/en/social-supports/income-assistance-program"},{s:"terr",p:"Home Renovation Program (HRP) - Nunavut Housing Corporation (NHC)",a:"Varies by household - up to $100,000",t:"Forgivable Loan",u:"https://www.nunavuthousing.ca/programs/homeownership"},{s:"terr",p:"Emergency Repair Program (ERP) - Nunavut Housing Corporation",a:"Varies by household - up to $15,000",t:"Grant",u:"https://www.nunavuthousing.ca/programs/homeownership"},{s:"terr",p:"Elders Housing Program (EHP) - Nunavut Housing Corporation",a:"Varies by household - up to $5,000 (maintenance) and $30,000 (repairs)",t:"Grant",u:"https://www.nunavuthousing.ca/programs/homeownership"}],
 };
+const FUNDING_CA = [{s:"npo",p:"Neil Squire Society",a:"Varies",t:"Equipment or Device Support",u:"https://www.neilsquire.ca/individual-programs-services/makers-making-change/"},{s:"npo",p:"Lions of Canada Clubs - Lions Clubs International",a:"Varies",t:"Grant",u:"https://www.lionsclubs.org/en"},{s:"npo",p:"Rotary Club",a:"Varies",t:"Grant",u:"https://www.rotary.org/en"},{s:"npo",p:"Tetra Society of North America",a:"Free to low cost",t:"Equipment or Device Support",u:"https://tetrasociety.org/chapters/"},{s:"npo",p:"Kinsmen Foundation",a:"Up to $10,000 (varies)",t:"Grant",u:"https://www.kincanada.ca/"},{s:"npo",p:"Canadian Red Cross Health Equipment Loan Program (HELP)",a:"Free to low cost",t:"Equipment or Device Support",u:"https://www.redcross.ca/how-we-help/community-health-services-in-canada/health-equipment-loan-program"},{s:"npo",p:"Easter Seals",a:"Varies",t:"Grant",u:"https://www.easterseals.org/"},{s:"cond",p:"Spinal Cord Injury Canada",a:"Varies",t:"Services and Equipment or Device Support",u:"https://sci-can.ca/network"},{s:"cond",p:"MS (Multiple Sclerosis) Canada - Quality of Life Equipment Program",a:"Up to $1,000 funding",t:"Grant",u:"https://mscanada.ca/quality-of-life-equipment-program"},{s:"cond",p:"ALS Canada Equipment Program",a:"Free to low cost",t:"Equipment or Device Support",u:"https://als.ca/get-support/get-equipment/"},{s:"cond",p:"Muscular Dystrophy Canada",a:"Funding for equipment over $200",t:"Grant",u:"https://muscle.ca/support-services/how-we-help/equipment-program/"},{s:"cond",p:"Spina Bifida and Hydrocephalus Association of Canada",a:"Varies",t:"",u:"https://sbhac.ca/"},{s:"ftax",p:"Home Accessibility Tax Credit (HATC)",a:"Approx. $3,000 credit",t:"Non-refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-31285-home-accessibility-expenses.html"},{s:"ftax",p:"Medical Expense Tax Credit (METC)",a:"Varies",t:"Non-refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/lines-33099-33199-eligible-medical-expenses-you-claim-on-your-tax-return.html"},{s:"ftax",p:"Multigenerational Home Renovation Tax Credit (MHRTC)",a:"Up to $7,500 credit",t:"Refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-45355-mhrtc.html"},{s:"fgrant",p:"On-Reserve Residential Rehabilitation Assistance Program (RRAP)",a:"Up to $60,000",t:"Forgivable Loan",u:"https://www.cmhc-schl.gc.ca/professionals/project-funding-and-mortgage-financing/funding-programs/all-funding-programs/residential-rehabilitation-assistance-program?ap=a1-p1"},{s:"fgrant",p:"Veterans Affairs Canada (VAC)",a:"Varies",t:"Grant",u:"https://www.veterans.gc.ca/en/financial-programs-and-services"},{s:"fgrant",p:"First Nations and Inuit Home and Community Care (FNIHCC) Program",a:"Varies",t:"Services",u:"https://www.sac-isc.gc.ca/eng/1582550638699/1582550666787"},{s:"ins",p:"Workplace Insurance Organizations - Workers' Compensation Boards (WCBs)",a:"Pays 85%-90% of net earnings (varies by province/territory)",t:"Insurance Benefit",u:"https://www.ccohs.ca/oshanswers/information/wcb_canada.html"},{s:"ins",p:"Disability Tax Credit (DTC) - Canada Revenue Agency (Government of Canada)",a:"Approx. $1,448 federal credit",t:"Non-refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/segments/tax-credits-deductions-persons-disabilities.html"},{s:"ins",p:"The Canada Disability Benefit",a:"Up to a maximum of $204.20 monthly",t:"Ongoing Income Benefit",u:"https://www.canada.ca/en/services/benefits/disability/canada-disability-benefit.html"}];
+
 const PK = ["BC","AB","SK","MB","ON","QC","NB","NS","PE","NL","YT","NT","NU"];
 
-const C = { teal:"#1a8a7d",tealDark:"#0f6b61",tealLight:"#e0f2f0",gold:"#d4952b",goldText:"#9c6400",goldLight:"#fdf3e0",bg:"#fafbfc",card:"#ffffff",text:"#1e2d2f",textMid:"#2e3f42",textLight:"#3d5357",border:"#d5dfe1",borderLight:"#e8eef0",pos:"#1a7a3a",posLight:"#e8f5eb",neg:"#b52a2a",negLight:"#fdeaea",white:"#ffffff" };
+/* HAT brand palette — matches Home Accessibility Toolkit website + print materials.
+   All text/background pairings verified to meet WCAG 2.1 AA (>=4.5:1 for body text).
+   teal* keys retained as aliases so existing markup maps onto HAT blue without churn. */
+const C = {
+  /* HAT primary blue (logo blue) — 7.45:1 on white */
+  teal:"#2A5CBF", tealDark:"#1F4FB2", tealLight:"#EBF0FA",
+  /* HAT green (logo green) — #116E3E is the accessible-on-tint variant, 5.64:1 on #E9F5EE */
+  green:"#14834A", greenDark:"#116E3E", greenLight:"#E9F5EE",
+  /* HAT amber — goldText darkened to #8A4B00 for 6.44:1 on amber tint */
+  gold:"#B45309", goldText:"#8A4B00", goldLight:"#FFF8EC",
+  bg:"#FAFBFC", card:"#FFFFFF",
+  text:"#1F2937", textMid:"#374151", textLight:"#4B5563",
+  border:"#D1D5DB", borderLight:"#E5E7EB",
+  pos:"#116E3E", posLight:"#E9F5EE", neg:"#B52A2A", negLight:"#FDEAEA",
+  white:"#FFFFFF"
+};
+/* HAT Decision Aid logo (embedded so the tool stays a single portable file) */
+const HAT_LOGO = "data:image/png;base64,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";
 const clamp = (v,lo,hi) => Math.max(lo,Math.min(hi,v));
 
 function App() {
@@ -429,6 +530,12 @@ function App() {
 
   const calcScores = useCallback(ww => { const w=ww||derivedWeights; return validOpts.map((_,oi)=>{ let t=0; for(let fi=0;fi<12;fi++) t+=(w[fi]||0)*(ratings[`${oi}-${fi}`]||0); return t; }); },[validOpts,ratings,derivedWeights]);
   const scores = useMemo(()=>calcScores(),[calcScores]);
+  /* A score of exactly 0 means "no different from staying put", so it must read
+     neutral rather than green. Sign carries the meaning; colour reinforces it. */
+  const scoreColor = s => (s > 0 ? C.pos : s < 0 ? C.neg : C.textLight);
+  const scoreLabel = s => (s > 0 ? "+" : "") + s;
+  /* Widest score this user's own weightings allow: 2 (max rating) x total weight. */
+  const scoreRangeMax = useMemo(() => derivedWeights.reduce((a,b)=>a+b,0) * 2, [derivedWeights]);
   const bestIdx = useMemo(()=>{ let b=0; scores.forEach((s,i)=>{if(s>scores[b])b=i;}); return scores.length&&scores[b]>0?b:-1; },[scores]);
   const maxAbs = useMemo(()=>Math.max(1,...scores.map(Math.abs)),[scores]);
   const topValues = useMemo(()=>vals.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,5),[vals]);
@@ -453,11 +560,32 @@ function App() {
   const sSecBtn={background:"transparent",color:C.tealDark,border:`2px solid ${C.teal}`,borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:600,cursor:"pointer"};
   const sGoldBtn={background:"#956500",color:C.white,border:"none",borderRadius:10,padding:"14px 36px",fontSize:16,fontWeight:600,cursor:"pointer"};
   const sSel=(on)=>({padding:"11px 18px",borderRadius:10,border:`2px solid ${on?C.teal:C.border}`,background:on?C.tealLight:C.card,color:on?C.tealDark:C.text,cursor:"pointer",fontSize:15,transition:"all 0.15s",fontWeight:on?600:400,textAlign:"left",lineHeight:1.4,width:"100%",display:"block"});
-  const sTag=(on)=>({display:"inline-block",padding:"8px 16px",borderRadius:22,border:`1.5px solid ${on?C.teal:"#8fa8ac"}`,background:on?C.tealLight:"#f0f5f6",color:on?C.tealDark:"#2e3f42",cursor:"pointer",fontSize:14,fontWeight:on?600:500,margin:"3px 4px",transition:"all 0.15s"});
+  /* Chip style. `on` = selected/already-added (HAT blue tint).
+     `used` = the chip can no longer be actioned, so it reads as a static
+     state rather than an affordance. Colours are unchanged between states
+     so contrast stays at the audited 6.52:1 / 9.37:1 — availability is
+     signalled by the cursor and the checkmark, never by dimming. */
+  const sTag=(on,used)=>({display:"inline-block",padding:"8px 16px",borderRadius:22,border:`1.5px solid ${on?C.teal:"#9CA3AF"}`,background:on?C.tealLight:"#F3F4F6",color:on?C.tealDark:C.textMid,cursor:used?"default":"pointer",fontSize:14,fontWeight:on?600:500,margin:"3px 4px",transition:"all 0.15s",fontFamily:"inherit",lineHeight:1.4,textAlign:"left"});
   const sInput={width:"100%",padding:"12px 16px",borderRadius:10,border:`1.5px solid ${C.border}`,fontSize:15,outline:"none",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"};
   const sSlider={width:"100%",accentColor:C.teal,height:6};
 
-  const Nav=({canNext=true,onNext,nextLabel})=>(<div id="nav-buttons" style={{display:"flex",justifyContent:"space-between",marginTop:32,gap:12}}>{step>0?<button onClick={()=>go(step-1)} style={sSecBtn}>{t.back}</button>:<div/>}{step<TOTAL-1&&<button onClick={()=>{if(onNext)onNext();go(step+1);}} style={{...sPrimBtn,opacity:canNext?1:0.5}}>{nextLabel||t.next}</button>}</div>);
+  /* Nav. When canNext is false the Continue button is genuinely blocked
+     (not just dimmed) and nextHint explains what is still needed.
+     aria-disabled rather than the disabled attribute keeps the button in the
+     tab order so screen reader users can find it and hear why it won't act.
+     The inactive style is a grey fill, not reduced opacity, so the label
+     stays at 7.0:1 contrast instead of fading below AA. */
+  const Nav=({canNext=true,onNext,nextLabel,nextHint})=>{
+    const blocked=!canNext;
+    const hintId="nav-hint-"+step;
+    return(<div id="nav-buttons" style={{marginTop:32}}>
+      {blocked&&nextHint&&<p id={hintId} role="status" style={{background:C.goldLight,border:`1px solid ${C.borderLight}`,borderLeft:`4px solid ${C.gold}`,borderRadius:8,padding:"10px 14px",fontSize:14,color:C.goldText,fontWeight:600,lineHeight:1.5,marginBottom:14}}>{nextHint}</p>}
+      <div style={{display:"flex",justifyContent:"space-between",gap:12}}>
+        {step>0?<button type="button" onClick={()=>go(step-1)} style={sSecBtn}>{t.back}</button>:<div/>}
+        {step<TOTAL-1&&<button type="button" onClick={()=>{if(blocked)return;if(onNext)onNext();go(step+1);}} aria-disabled={blocked} aria-describedby={blocked&&nextHint?hintId:undefined} style={blocked?{...sPrimBtn,background:"#E5E7EB",color:C.textLight,cursor:"not-allowed"}:sPrimBtn}>{nextLabel||t.next}</button>}
+      </div>
+    </div>);
+  };
   const PersonTabs=()=>forTwo?(<div style={{display:"flex",gap:8,marginBottom:20}}>{[1,2].map(p=>(<button key={p} onClick={()=>setActivePerson(p)} style={{flex:1,padding:"10px 0",borderRadius:10,border:`2px solid ${activePerson===p?C.teal:C.border}`,background:activePerson===p?C.teal:C.card,color:activePerson===p?C.white:C.text,cursor:"pointer",fontWeight:600,fontSize:14}}>{p===1?t.person1:t.person2}</button>))}</div>):null;
   const Progress=()=>{const sl=step===0?"":step<=5?t.stage1:t.stage2;const pct=step===0?0:(step/(TOTAL-1))*100;return step===0?null:(<div id="progress-bar" style={{marginBottom:32}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:12,fontWeight:700,color:C.tealDark,textTransform:"uppercase",letterSpacing:1.2}}>{sl}</span><span style={{fontSize:12,color:C.textLight}}>{t.step} {step} {t.of} {TOTAL-1}</span></div><div style={{height:5,background:C.borderLight,borderRadius:3}}><div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${C.tealDark},${C.teal})`,borderRadius:3,transition:"width 0.4s"}}/></div></div>);};
   const CatHeader=({label})=>(<div style={{fontSize:13,fontWeight:700,color:C.tealDark,textTransform:"uppercase",letterSpacing:1,marginBottom:14,paddingBottom:6,borderBottom:`2px solid ${C.tealLight}`}}>{label}</div>);
@@ -465,7 +593,103 @@ function App() {
 
   /* ─── SCREENS ─────────────────────────────────────────────────────── */
 
-  const Welcome=()=>(<div style={{maxWidth:600,margin:"0 auto",textAlign:"center",paddingTop:20}}><div style={{width:72,height:72,borderRadius:"50%",background:C.tealLight,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontSize:36}}>🏠</div><h1 style={{fontSize:30,fontWeight:700,color:C.text,marginBottom:12}}>{t.welcomeTitle}</h1><p style={{fontSize:16,color:C.textMid,lineHeight:1.7,marginBottom:24}}>{t.welcomeBody}</p><div style={{textAlign:"left",...sCard}}><p style={{fontWeight:600,marginBottom:10}}>{t.welcomeHow}</p>{t.welcomeSteps.map((s,i)=>(<div key={i} style={{display:"flex",gap:12,marginBottom:10}}><span style={{width:28,height:28,borderRadius:"50%",background:C.teal,color:C.white,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,flexShrink:0}}>{i+1}</span><span style={{fontSize:15,color:C.textMid,lineHeight:1.5}}>{s}</span></div>))}</div><p style={{fontSize:14,color:C.textLight,marginBottom:28}}>{t.welcomeTime}</p><div style={{display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}><button onClick={()=>go(1)} style={{...sPrimBtn,width:"100%",maxWidth:360}}>{t.welcomeStart}</button></div></div>);
+  /* ══════════════════════════════════════════════════════════════════
+     HAT Decision Aid — landing page (first screen users see).
+     Mirrors the HAT website/print branding: logo, blue title banner,
+     left-accent-bar callout cards, grey footer rule.
+     ══════════════════════════════════════════════════════════════════ */
+
+  /* Left-accent callout card, matching the HAT print/document treatment */
+  const Callout = ({icon, title, accent, fill, titleColor, children}) => (
+    <div style={{display:"flex", marginBottom:18, borderRadius:10, overflow:"hidden",
+                 border:`1px solid ${C.borderLight}`, background:fill}}>
+      <div aria-hidden="true" style={{width:6, background:accent, flexShrink:0}}/>
+      <div style={{padding:"14px 18px"}}>
+        <p style={{fontWeight:700, fontSize:15, color:titleColor, marginBottom:6}}>
+          <span aria-hidden="true">{icon}</span>{"  "}{title}
+        </p>
+        {children}
+      </div>
+    </div>
+  );
+
+  const Welcome = () => (
+    <div style={{maxWidth:660, margin:"0 auto"}}>
+
+      {/* Logo */}
+      <div style={{textAlign:"center", marginBottom:18}}>
+        <img src={HAT_LOGO}
+             alt="Home Accessibility Toolkit Decision Aid"
+             style={{width:"100%", maxWidth:260, height:"auto", display:"inline-block"}}/>
+      </div>
+
+      {/* Blue title banner */}
+      <h1 style={{background:C.tealDark, color:C.white, fontSize:26, fontWeight:700,
+                  lineHeight:1.3, padding:"16px 22px", borderRadius:10, marginBottom:16}}>
+        {t.title} {t.subtitle}
+      </h1>
+
+      {/* Tagline */}
+      <p style={{fontStyle:"italic", fontSize:16, color:C.textMid,
+                 lineHeight:1.6, marginBottom:20}}>
+        {t.landTagline}
+      </p>
+
+      {/* How it works */}
+      <h2 style={{fontSize:20, fontWeight:700, color:C.text,
+                  marginTop:26, marginBottom:12}}>{t.landHowTitle}</h2>
+      <ul style={{listStyle:"none", margin:"0 0 22px", padding:0}}>
+        {t.landHowSteps.map(([lead, rest], i) => (
+          <li key={i} style={{display:"flex", gap:10, marginBottom:9, alignItems:"flex-start"}}>
+            <span aria-hidden="true" style={{color:C.tealDark, fontWeight:700,
+                                             lineHeight:1.55, flexShrink:0}}>{"\u2022"}</span>
+            <span style={{fontSize:15, color:C.text, lineHeight:1.55}}>
+              <strong>{lead}</strong> {rest}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Before you start — includes the privacy note */}
+      <Callout icon={"\u26A0\uFE0F"} title={t.landBeforeTitle}
+               accent={C.gold} fill={C.goldLight} titleColor={C.goldText}>
+        <p style={{fontSize:15, color:C.text, lineHeight:1.6, marginBottom:10}}>{t.landBeforeBody}</p>
+        <p style={{fontSize:15, color:C.text, lineHeight:1.6}}>{t.landBeforeBody2}</p>
+      </Callout>
+
+      {/* Start button */}
+      <div style={{textAlign:"center", margin:"28px 0 8px"}}>
+        <button onClick={() => go(1)}
+                style={{...sPrimBtn, width:"100%", maxWidth:360}}>
+          {t.welcomeStart}
+        </button>
+      </div>
+
+      {/* Attribution */}
+      <h2 style={{fontSize:20, fontWeight:700, color:C.text,
+                  marginTop:34, marginBottom:10}}>{t.landSourceTitle}</h2>
+      <p style={{fontSize:15, color:C.text, lineHeight:1.6,
+                 marginBottom:14}}>{t.landSourceIntro}</p>
+
+      <p style={{fontSize:15, fontWeight:700, color:C.text, marginBottom:3}}>{t.landSource1Name}</p>
+      <p style={{fontSize:14, color:C.textMid, lineHeight:1.6,
+                 marginBottom:14}}>{t.landSource1Cite}</p>
+
+      <p style={{fontSize:15, fontWeight:700, color:C.text, marginBottom:3}}>{t.landSource2Name}</p>
+      <p style={{fontSize:14, color:C.textMid, lineHeight:1.6,
+                 marginBottom:18}}>{t.landSource2Cite}</p>
+
+      {/* Footer rule */}
+      <div style={{borderTop:`1px solid ${C.border}`, paddingTop:10, marginTop:6}}>
+        <p style={{fontSize:12, color:C.textLight, lineHeight:1.6}}>
+          {t.title}{"  |  "}{t.subtitle}{"  |  "}homeaccessibilitytoolkit.ca
+        </p>
+        <p style={{fontSize:12, color:C.textLight, fontStyle:"italic", lineHeight:1.6}}>
+          {t.landDisclaimer}
+        </p>
+      </div>
+    </div>
+  );
 
   // 1 — Options & Context (OPTIONS FIRST)
   const S1_1=()=>(<div>
@@ -473,13 +697,13 @@ function App() {
     <div style={sCard}>
       {userOptions.map((opt,i)=>(<div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"center"}}><span style={{fontWeight:700,color:C.tealDark,fontSize:16,minWidth:24}}>{i+1}.</span><input value={opt} onChange={e=>{const n=[...userOptions];n[i]=e.target.value;setUserOptions(n);}} placeholder={t.optionPh} style={{...sInput,flex:1,width:"auto"}}/>{userOptions.length>1&&<button onClick={()=>setUserOptions(userOptions.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:C.neg,fontSize:22,cursor:"pointer"}}>×</button>}</div>))}
       {userOptions.length<4&&<button onClick={()=>setUserOptions([...userOptions,""])} style={{...sSecBtn,width:"100%",marginTop:4,textAlign:"center",fontSize:14,padding:"10px 0"}}>{t.addOption}</button>}
-      <div style={{marginTop:14}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonOpts}</p><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{t.suggestions.map((s,i)=><span key={i} onClick={()=>{const idx=userOptions.findIndex(o=>!o);if(idx>=0){const n=[...userOptions];n[idx]=s;setUserOptions(n);}else if(userOptions.length<4)setUserOptions([...userOptions,s]);}} style={sTag(false)}>{s}</span>)}</div></div>
+      <div style={{marginTop:14}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonOpts}</p><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{t.suggestions.map((s,i)=>{const chosen=userOptions.some(o=>o.trim()===s);const noRoom=!chosen&&!userOptions.some(o=>!o.trim())&&userOptions.length>=4;const locked=chosen||noRoom;return(<button type="button" key={i} aria-pressed={chosen} aria-disabled={locked} onClick={()=>{if(locked)return;const idx=userOptions.findIndex(o=>!o.trim());if(idx>=0){const n=[...userOptions];n[idx]=s;setUserOptions(n);}else if(userOptions.length<4)setUserOptions([...userOptions,s]);}} style={sTag(chosen,locked)}>{chosen?"\u2713 ":""}{s}</button>);})}</div></div>
     </div>
-    <div style={sCard}><p style={sCardLabel}>{t.reasonsQ}</p><textarea value={reasonsText} onChange={e=>setReasonsText(e.target.value)} placeholder={t.reasonsPh} rows={3} style={sInput}/><div style={{marginTop:10}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonReasons}</p><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{t.reasonSuggestions.map((s,i)=><span key={i} onClick={()=>setReasonsText(p=>p?p+"; "+s:s)} style={sTag(reasonsText.includes(s))}>{s}</span>)}</div></div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.reasonsQ}</p><textarea value={reasonsText} onChange={e=>setReasonsText(e.target.value)} placeholder={t.reasonsPh} rows={3} style={sInput}/><div style={{marginTop:10}}><p style={{fontSize:13,color:C.textLight,marginBottom:6}}>{t.commonReasons}</p><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{t.reasonSuggestions.map((s,i)=>{const chosen=reasonsText.includes(s);return(<button type="button" key={i} aria-pressed={chosen} aria-disabled={chosen} onClick={()=>{if(chosen)return;setReasonsText(p=>p?p+"; "+s:s);}} style={sTag(chosen,chosen)}>{chosen?"\u2713 ":""}{s}</button>);})}</div></div></div>
     <div style={sCard}><p style={sCardLabel}>{t.timelineQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.timelines.map((tl,i)=><button key={i} onClick={()=>setTimeline(i)} style={sSel(timeline===i)}>{tl}</button>)}</div></div>
-    <div style={sCard}><p style={sCardLabel}>{t.provinceQ}</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{PK.map((pk,i)=><span key={pk} onClick={()=>setProvince(pk)} style={sTag(province===pk)}>{t.provinces[i]}</span>)}</div></div>
+    <div style={sCard}><p style={sCardLabel}>{t.provinceQ}</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{PK.map((pk,i)=><button type="button" key={pk} aria-pressed={province===pk} onClick={()=>setProvince(pk)} style={sTag(province===pk)}>{t.provinces[i]}</button>)}</div></div>
     <div style={sCard}><p style={sCardLabel}>{t.stageQ}</p><div style={{display:"flex",flexDirection:"column",gap:8}}>{t.stages.map((s,i)=><button key={i} onClick={()=>setDecisionStage(i)} style={sSel(decisionStage===i)}>{s}</button>)}</div></div>
-    <Nav/>
+    <Nav canNext={userOptions.some(o=>o.trim())} nextHint={t.navNeedOption}/>
   </div>);
 
   // 2 — Disability & Tenure
@@ -508,7 +732,7 @@ function App() {
   // 4 — Values
   const catR=[[0,3],[3,5],[5,9],[9,12]];
   const catN=[t.catConnections,t.catMoney,t.catHome,t.catFuture];
-  const S1_4=()=>{const src=activePerson===2?p2Vals:vals;const setSrc=activePerson===2?setP2Vals:setVals;const upd=(i,v)=>{const n=[...src];n[i]=Number(v);setSrc(n);};return(<div><h2 style={sH1}>{t.s1_4_title}</h2><p style={sPurpose}>{t.s1_4_purpose}</p><PersonTabs/>{catN.map((cat,ci)=>(<div key={ci} style={sCard}><CatHeader label={cat}/>{t.values.slice(catR[ci][0],catR[ci][1]).map((v,vi)=>{const idx=catR[ci][0]+vi;return(<div key={idx} style={{marginBottom:22}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:15}}>{v}</span><span style={{fontWeight:700,color:C.tealDark,fontSize:20,minWidth:28,textAlign:"right"}}>{src[idx]}</span></div><input type="range" min="0" max="5" value={src[idx]} onChange={e=>upd(idx,e.target.value)} style={sSlider}/><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,color:C.textLight}}>{t.notImportant}</span><span style={{fontSize:11,color:C.textLight}}>{t.veryImportant}</span></div></div>);})}</div>))}<Nav/></div>);};
+  const S1_4=()=>{const src=activePerson===2?p2Vals:vals;const setSrc=activePerson===2?setP2Vals:setVals;const upd=(i,v)=>{const n=[...src];n[i]=Number(v);setSrc(n);};return(<div><h2 style={sH1}>{t.s1_4_title}</h2><p style={sPurpose}>{t.s1_4_purpose}</p><PersonTabs/>{catN.map((cat,ci)=>(<div key={ci} style={sCard}><CatHeader label={cat}/>{t.values.slice(catR[ci][0],catR[ci][1]).map((v,vi)=>{const idx=catR[ci][0]+vi;return(<div key={idx} style={{marginBottom:22}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:15}}>{v}</span><span style={{fontWeight:700,color:C.tealDark,fontSize:20,minWidth:28,textAlign:"right"}}>{src[idx]}</span></div><input type="range" min="0" max="5" value={src[idx]} onChange={e=>upd(idx,e.target.value)} style={sSlider}/><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,color:C.textLight}}>{t.notImportant}</span><span style={{fontSize:11,color:C.textLight}}>{t.veryImportant}</span></div></div>);})}</div>))}<Nav canNext={vals.some(v=>v>0)&&(!forTwo||p2Vals.some(v=>v>0))} nextHint={forTwo?t.navNeedValuesBoth:t.navNeedValues}/></div>);};
 
   // 5 — Pros & Cons (after Values, before SURE)
   const S2_0 = () => (
@@ -649,7 +873,9 @@ function App() {
           </div>
         )}
         <PCCard />
-        <div style={sCard}><SRow label={t.summaryReadiness} value={t.readinessLabels[ri]} /></div>
+        <div style={sCard}>
+          <SRow label={t.summaryReadiness} value={decisionStage !== null ? t.stages[decisionStage] : t.notAnswered} />
+        </div>
         <div style={{...sCard, background: C.tealLight, borderLeft: `4px solid ${C.teal}`}}>
           <p style={{fontSize: 15, color: C.tealDark, lineHeight: 1.6}}>{t.summaryNext}</p>
         </div>
@@ -668,10 +894,6 @@ function App() {
     return (
       <div>
         <h2 style={sH1}>{t.s2_2_title}</h2>
-        <p style={sPurpose}>{t.s2_2_purpose}</p>
-        <div style={{...sCard, background: C.tealLight, borderLeft: `4px solid ${C.teal}`, marginBottom: 20}}>
-          <p style={{fontWeight: 600, color: C.tealDark, fontSize: 14}}>{"⚓ "}{t.baselineNote}</p>
-        </div>
         <div style={{display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap"}}>
           {validOpts.map((o, i) => {
             const oc = optionCompletion[i] || {rated: 0, total: 12, complete: false};
@@ -689,15 +911,14 @@ function App() {
           })}
         </div>
         <div style={{...sCard, background: C.goldLight, borderLeft: `4px solid ${C.gold}`}}>
-          <p style={{fontWeight: 700, fontSize: 18, color: C.text}}>{t.ratingInstruction} <span style={{color: C.teal}}>{opt}</span></p>
-          <p style={{fontSize: 14, color: C.textMid, marginTop: 8, lineHeight: 1.5, fontStyle: "italic"}}>{t.ratingCompare}</p>
+          <p style={{fontWeight: 700, fontSize: 18, color: C.text}}>{"⚓ "}{t.ratingInstruction} <span style={{color: C.tealDark}}>{opt}</span></p>
+          <p style={{background: C.white, border: `2px solid ${C.gold}`, borderRadius: 10, padding: "14px 18px", marginTop: 12, fontSize: 17, fontWeight: 700, color: C.text, lineHeight: 1.5}}>{t.ratingCompare}</p>
         </div>
         {t.factors.map((f, fi) => {
           const cur = ratings[`${rateIdx}-${fi}`];
           return (
             <div key={fi} style={{...sCard, padding: "18px 22px"}}>
               <p style={{fontSize: 15, fontWeight: 500, marginBottom: 6}}>{f}</p>
-              <p style={{fontSize: 12, color: C.textLight, marginBottom: 10, textAlign: "center"}}>{t.ratingHint}</p>
               <div style={{display: "flex", gap: 5, flexWrap: "wrap"}}>
                 {t.ratings.map((label, ri) => {
                   const sc = t.ratingScores[ri];
@@ -785,6 +1006,39 @@ function App() {
     </div>
   );
 
+  /* Funding preview — one block per category, program names link out to the
+     administering organization. No hooks: S2_4 is invoked imperatively. */
+  const FundingGroup = ({heading, items, compact}) => {
+    const order = ["prov","terr","city","gds","ins","npo","cond","ftax","fgrant","other"];
+    const seen = order.filter(k => items.some(p => p.s === k));
+    return (
+      <div style={{marginBottom: 18}}>
+        <p style={{fontWeight: 700, fontSize: 15, color: C.tealDark, background: C.tealLight, borderRadius: 8, padding: "8px 14px", marginBottom: 10}}>{heading}</p>
+        {seen.map(key => (
+          <div key={key} style={{marginBottom: compact ? 10 : 14}}>
+            <p style={{fontSize: 13, fontWeight: 700, color: C.textMid, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6}}>{t.fundingSections[key]}</p>
+            {items.filter(p => p.s === key).map((p, n) => (
+              compact ? (
+                <p key={n} style={{fontSize: 14, lineHeight: 1.45, marginBottom: 5, paddingLeft: 12, borderLeft: `3px solid ${C.borderLight}`}}>
+                  <span style={{fontWeight: 600}}>{p.u ? <a href={p.u} target="_blank" rel="noopener noreferrer" style={{color: C.tealDark, textDecoration: "underline"}}>{p.p}</a> : p.p}</span>
+                  {p.t && <span style={{color: C.textLight, fontSize: 13}}>{" \u2014 "}{p.t}</span>}
+                </p>
+              ) : (
+                <div key={n} style={{borderLeft: `3px solid ${C.borderLight}`, paddingLeft: 12, marginBottom: 10}}>
+                  <p style={{fontSize: 14, fontWeight: 600, lineHeight: 1.4}}>
+                    {p.u ? <a href={p.u} target="_blank" rel="noopener noreferrer" style={{color: C.tealDark, textDecoration: "underline"}}>{p.p}</a> : p.p}
+                  </p>
+                  <p style={{fontSize: 13, color: C.text, lineHeight: 1.45, marginTop: 2}}>{p.a}</p>
+                  {p.t && <p style={{fontSize: 12, color: C.textLight, marginTop: 2}}>{p.t}</p>}
+                </div>
+              )
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   // 10 — Results
   const S2_4 = () => {
     const funding = province ? FUNDING[province] : null;
@@ -795,7 +1049,6 @@ function App() {
     return (
       <div>
         <h2 style={sH1}>{t.s2_4_title}</h2>
-        <p style={sPurpose}>{t.s2_4_purpose}</p>
 
         <div style={{...sCard, background: C.goldLight, borderLeft: `4px solid ${C.gold}`, fontSize: 13, color: C.textMid}}>
           {"\u26A0\uFE0F "}{t.disclaimer}
@@ -835,17 +1088,30 @@ function App() {
           </div>
         )}
         <PCCard />
-        <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}><SRow label={t.summaryReadiness} value={t.readinessLabels[ri]} /></div>
+        <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}>
+          <SRow label={t.summaryReadiness} value={decisionStage !== null ? t.stages[decisionStage] : t.notAnswered} />
+        </div>
 
         {/* ═══ PART 2: Pugh Structured Comparison ═══ */}
         <div className="print-page-break" style={{...sSection, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart2}</div>
-        <p style={sSectionDesc}>{t.resultsPart2Desc}</p>
+        <div style={{background: C.tealLight, borderLeft: `4px solid ${C.tealDark}`, borderRadius: 8, padding: "14px 18px", marginBottom: 16}}>
+          <p style={{fontSize: 15, fontWeight: 600, color: C.text, lineHeight: 1.55, marginBottom: 12}}>{t.resultsScoringLead}</p>
+          {t.resultsLegend.map(([sym, label, desc], li) => (
+            <div key={li} style={{display: "flex", gap: 10, alignItems: "flex-start", marginBottom: li < 2 ? 8 : 0}}>
+              <span aria-hidden="true" style={{background: li === 0 ? C.posLight : li === 1 ? C.negLight : "#F3F4F6", color: li === 0 ? C.pos : li === 1 ? C.neg : C.textMid, fontWeight: 800, fontSize: 15, minWidth: 34, textAlign: "center", borderRadius: 6, padding: "3px 0", flexShrink: 0}}>{sym}</span>
+              <span style={{fontSize: 14, color: C.text, lineHeight: 1.5}}><strong>{label}</strong>{" \u2014 "}{desc}</span>
+            </div>
+          ))}
+          <p style={{fontSize: 13, color: C.textMid, lineHeight: 1.5, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.border}`}}>
+            {t.resultsScoreRange.replace("{min}", "\u2212" + scoreRangeMax).replace("{max}", "+" + scoreRangeMax)}
+          </p>
+        </div>
 
         {bestIdx >= 0 && (
           <div className="print-no-break" style={{...sCard, background: C.posLight, borderLeft: `4px solid ${C.pos}`, textAlign: "center", padding: 32}}>
             <p style={{fontSize: 14, color: C.textLight, marginBottom: 4}}>{t.strongest}</p>
             <p style={{fontSize: 28, fontWeight: 700, color: C.pos, marginBottom: 4}}>{validOpts[bestIdx]}</p>
-            <p style={{fontSize: 36, fontWeight: 800, color: C.pos}}>+{scores[bestIdx]}</p>
+            <p style={{fontSize: 36, fontWeight: 800, color: scoreColor(scores[bestIdx] || 0)}}>{scoreLabel(scores[bestIdx] || 0)}</p>
           </div>
         )}
 
@@ -865,10 +1131,10 @@ function App() {
                   {opt.length > 22 ? opt.slice(0, 22) + "\u2026" : opt}
                 </span>
                 <div style={{flex: 1, display: "flex", alignItems: "center", justifyContent: s >= 0 ? "flex-start" : "flex-end", height: 22}}>
-                  <div style={{width: bw, height: 18, background: s >= 0 ? C.pos : C.neg, borderRadius: 4, transition: "width 0.5s", minWidth: s !== 0 ? 4 : 0}} />
+                  <div style={{width: bw, height: 18, background: scoreColor(s), borderRadius: 4, transition: "width 0.5s", minWidth: s !== 0 ? 4 : 0}} />
                 </div>
-                <span style={{fontWeight: 700, minWidth: 36, color: s >= 0 ? C.pos : C.neg}}>
-                  {s > 0 ? "+" : ""}{s}
+                <span style={{fontWeight: 700, minWidth: 36, color: scoreColor(s)}}>
+                  {scoreLabel(s)}
                 </span>
               </div>
             );
@@ -912,7 +1178,7 @@ function App() {
                   <td style={{padding: "10px 4px", fontWeight: 700}}>{t.total}</td>
                   <td></td>
                   {validOpts.map((_, i) => (
-                    <td key={i} style={{textAlign: "center", fontWeight: 700, fontSize: 16, color: (scores[i] || 0) >= 0 ? C.pos : C.neg}}>
+                    <td key={i} style={{textAlign: "center", fontWeight: 700, fontSize: 16, color: scoreColor(scores[i] || 0)}}>
                       {(scores[i] || 0) > 0 ? "+" : ""}{scores[i] || 0}
                     </td>
                   ))}
@@ -923,16 +1189,11 @@ function App() {
         </div>
 
         {funding && (
-          <div className="print-page-break print-no-break" style={sCard}>
+          <div className="print-page-break" style={sCard}>
             <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.fundingPreview}</p>
-            <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.fundingPreviewDesc}</p>
-            <div style={{background: C.tealLight, borderRadius: 10, padding: 18}}>
-              <p style={{fontWeight: 700, color: C.tealDark, marginBottom: 10}}>{t.provinceFull[PK.indexOf(province)]}</p>
-              <p style={{fontSize: 14, marginBottom: 4}}><strong>{t.programs}</strong> {funding.programs.join(", ")}</p>
-              <p style={{fontSize: 14, marginBottom: 4}}><strong>{t.maxFunding}</strong> {funding.max}</p>
-              <p style={{fontSize: 14}}><strong>{t.taxCredits}</strong> {funding.tax}</p>
-            </div>
-            <p style={{fontSize: 12, color: C.textLight, marginTop: 10, fontStyle: "italic"}}>{t.indicative}</p>
+            <p style={{fontSize: 13, color: C.textLight, marginBottom: 16}}>{t.fundingPreviewDesc}</p>
+            <FundingGroup heading={`${t.fundingRegional} ${t.provinceFull[PK.indexOf(province)]}`} items={funding} />
+            <FundingGroup heading={t.fundingNational} items={FUNDING_CA} compact />
           </div>
         )}
 
@@ -973,29 +1234,6 @@ function App() {
           </div>
         )}
 
-        <div className="print-page-break" style={{...sCard, borderLeft: `4px solid ${C.teal}`, marginTop: 8}}>
-          <p style={{fontWeight: 700, fontSize: 18, color: C.tealDark, marginBottom: 4}}>{t.s1_5_title}</p>
-          <p style={{fontSize: 14, color: C.textMid, marginBottom: 16, lineHeight: 1.5}}>{t.s1_5_purpose}</p>
-          {t.sureQs.map((q, qi) => (
-            <div key={qi} className="print-no-break" style={{marginBottom: 16}}>
-              <p style={{fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 8}}>{q}</p>
-              <div className="sure-buttons" style={{display: "flex", gap: 10, marginBottom: 6}}>
-                <button onClick={() => { const n = [...sure]; n[qi] = true; setSure(n); }} style={{...sSel(sure[qi] === true), flex: 1, textAlign: "center"}}>{t.yes}</button>
-                <button onClick={() => { const n = [...sure]; n[qi] = false; setSure(n); }} style={{...sSel(sure[qi] === false), flex: 1, textAlign: "center"}}>{t.no}</button>
-              </div>
-              <div className="sure-tip" style={{display: sure[qi] === false ? "block" : "none", background: C.goldLight, borderRadius: 10, padding: "12px 16px"}}>
-                <p style={{fontWeight: 600, color: C.goldText, fontSize: 14, marginBottom: 6}}>{"💡 "}{t.sureHelp[qi].title}</p>
-                {t.sureHelp[qi].tips.map((tip, ti) => (
-                  <div key={ti} style={{display: "flex", gap: 8, marginBottom: 4}}>
-                    <span style={{color: C.goldText, flexShrink: 0}}>{"▸"}</span>
-                    <span style={{fontSize: 13, color: C.textMid, lineHeight: 1.5}}>{tip}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
         <div id="print-buttons" style={{display: "flex", gap: 12, marginTop: 24, flexWrap: "wrap"}}>
           <button onClick={() => window.print()} style={sPrimBtn}>
             {"\uD83D\uDDA8\uFE0F "}{t.exportPdf}
@@ -1035,16 +1273,16 @@ function App() {
       <div id="app-header" style={{background: C.tealDark, color: C.white, padding: "14px 24px"}}>
         <div style={{maxWidth: 740, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center"}}>
           <div style={{display: "flex", alignItems: "center", gap: 12}}>
-            <div style={{width: 36, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20}}>
-              {"\uD83C\uDFE0"}
+            <div style={{width: 40, height: 40, borderRadius: 8, background: C.white, display: "flex", alignItems: "center", justifyContent: "center", padding: 4, flexShrink: 0}}>
+              <img src={HAT_LOGO} alt="" aria-hidden="true" style={{maxWidth: "100%", maxHeight: "100%", display: "block"}}/>
             </div>
             <div>
-              <div style={{fontSize: 18, fontWeight: 700, letterSpacing: 0.3}}>{t.title}</div>
-              <div style={{fontSize: 11, opacity: 0.8}}>{t.subtitle}</div>
+              <div style={{fontSize: 16, fontWeight: 700, letterSpacing: 0.3, lineHeight: 1.25}}>{t.title}</div>
+              <div style={{fontSize: 12, opacity: 0.9, fontWeight: 600}}>{t.subtitle}</div>
             </div>
           </div>
           <button onClick={() => setLang(lang === "en" ? "fr" : "en")}
-            style={{background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", color: C.white, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600}}>
+            style={{background: C.white, border: `1px solid ${C.white}`, color: C.tealDark, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit"}}>
             {t.langSwitch}
           </button>
         </div>
@@ -1054,7 +1292,7 @@ function App() {
         {renderScreen()}
       </div>
       <div id="app-footer" style={{background: C.tealDark, color: "rgba(255,255,255,0.6)", padding: "14px 24px", textAlign: "center", fontSize: 11, position: "fixed", bottom: 0, left: 0, right: 0}}>
-        {t.tagline} {"\u00B7"} {"\u00A9"} 2026 Home Accessibility Toolkit Project {"\u00B7"} Sunnybrook Research Institute
+        {t.tagline} {"\u00B7"} {"\u00A9"} 2026 Home Accessibility Toolkit Decision Aid {"\u00B7"} Sunnybrook Research Institute
       </div>
     </div>
   );
