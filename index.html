@@ -8,12 +8,17 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; }
 
+  .print-only, .print-only-inline { display: none; }
+
   @media print {
+    /* Letter paper with real margins */
+    @page { size: letter; margin: 0.6in 0.6in 0.65in; }
+
     /* Hide all UI chrome */
     #app-header, #app-footer, #progress-bar, #nav-buttons, #print-buttons { display: none !important; }
 
     /* Reset page layout */
-    body { background: white !important; }
+    html, body, #root > div { background: #fff !important; }
     #root > div { min-height: unset !important; }
     #app-main { padding: 0 !important; max-width: 100% !important; }
 
@@ -38,6 +43,30 @@
 
     /* Tighten font sizes slightly */
     body { font-size: 12px; }
+
+    /* Results page: print-only title line, flat cards, no clipping */
+    .print-only { display: block !important; }
+    .print-only-inline { display: inline !important; }
+    .screen-only { display: none !important; }
+    #results > div { box-shadow: none !important; }
+    #results [style*="overflow"] { overflow: visible !important; }
+    .print-keep-next { break-after: avoid; page-break-after: avoid; }
+    #results table th:first-child, #results table td:first-child { width: 36%; }
+    #results table td, #results table th { padding-top: 4px !important; padding-bottom: 4px !important; }
+    .print-compact { padding: 14px 18px !important; margin-bottom: 12px !important; }
+    .print-compact p { margin-bottom: 2px !important; }
+    .print-strong-name { font-size: 19px !important; line-height: 1.3; }
+    #results .print-legend { padding: 10px 14px !important; margin-bottom: 10px !important; }
+    #results .print-legend p, #results .print-legend span { font-size: 12px !important; line-height: 1.4 !important; }
+    #results .print-legend > p:first-child { margin-bottom: 6px !important; }
+    #results .print-legend > div { margin-bottom: 3px !important; }
+    #results .print-legend > p:last-child { margin-top: 6px !important; padding-top: 6px !important; }
+    .print-strong-score { font-size: 26px !important; }
+    #results .print-compact-note { padding: 10px 14px !important; margin-bottom: 10px !important; font-size: 12px !important; }
+
+    /* Tables: keep rows whole, repeat headers if a table spans pages */
+    thead { display: table-header-group; }
+    tr, th, td { break-inside: avoid; page-break-inside: avoid; }
   }
 </style>
 <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
@@ -134,7 +163,7 @@ const T = {
     intentionQ: "How long do you intend to live in this home?",
     intentions: ["Less than 1 year", "1 to 5 years", "More than 5 years", "As long as possible", "Not sure"],
     ownerPermQ: "If you rent or don't own the home, has the owner given permission for modifications?",
-    ownerPerms: ["Yes", "No", "Not yet asked", "Not applicable — I own the home"],
+    ownerPerms: ["Yes", "No", "Asked — waiting for a reply", "Not yet asked", "Not applicable — I own the home"],
 
     // 1.3 — Who's Involved
     s1_3_title: "Who else is involved in this decision?",
@@ -154,17 +183,19 @@ const T = {
     s1_4_purpose: "Before comparing options, take a moment to reflect on what's important in your life. Rate each from 0 (not important at all) to 5 (extremely important). These will shape how your options are compared.",
     notImportant: "0 — Not important", veryImportant: "5 — Extremely important",
     catConnections: "Relationships & Connections", catMoney: "Money & Security",
-    catHome: "Home & Daily Life", catFuture: "Independence & Future",
+    catHome: "Home & Practicalities", catFuture: "Independence & Future Needs",
     values: [
-      "Staying close to people I care about", "Keeping my social life and community",
-      "Easy access to services I rely on (doctor, pharmacy, transit)",
-      "Keeping my housing costs manageable", "Protecting the financial value of my home",
-      "Being able to manage my home independently", "Feeling safe in my home",
-      "Having a home I feel proud of and comfortable in",
-      "Avoiding the stress and disruption of a major change",
-      "Making my own decisions about how I live",
-      "Having a home that will still work as my needs change",
+      "Staying close to family", "Staying close to friends and my social life",
+      "Easy access to shops and services I rely on (doctor, pharmacy, transit)",
       "Maintaining cultural or spiritual connections to my community",
+      "Keeping my weekly and monthly costs manageable",
+      "Protecting the equity and financial value of my home",
+      "Having a home I feel proud of and comfortable in",
+      "Having access to funding support",
+      "Avoiding the stress and difficulty of a major change",
+      "Being able to manage cleaning and repairs",
+      "Having control over how I live day to day",
+      "Having a home that will still work as my needs change",
     ],
 
     // 1.5 — SURE
@@ -214,8 +245,8 @@ const T = {
     s2_1_title: "How important is each factor to your decision?",
     s2_1_purpose: "These sliders are pre-set from the values you rated earlier. Adjust anything that feels different when you think specifically about this housing decision. 0 = not important, 10 = most important.",
     notImp: "0", veryImp: "10",
-    factors: ["Staying close to friends & social life", "Staying close to family", "Access to shops, services & transit", "Weekly / monthly cost of living", "Equity / financial value of home", "Difficulty & stress of making a change", "Ease of maintaining and cleaning the home", "Pride & comfort in the home", "Control over how I live day to day", "Home suitability as my needs change", "Cultural & community connections", "Availability of funding support"],
-    factorCats: ["Connections","Connections","Connections","Money & Security","Money & Security","Home & Practicalities","Home & Practicalities","Home & Practicalities","Independence & Future","Independence & Future","Independence & Future","Funding"],
+    factors: ["Staying close to family", "Staying close to friends & social life", "Access to shops, services & transit", "Cultural & community connections", "Weekly / monthly cost of living", "Equity / financial value of home", "Pride & comfort in the home", "Availability of funding support", "Difficulty & stress of making a change", "Managing cleaning and repairs", "Control over how I live day to day", "Home suitability as my needs change"],
+    factorCats: ["Relationships & Connections","Relationships & Connections","Relationships & Connections","Relationships & Connections","Money & Security","Money & Security","Money & Security","Money & Security","Home & Practicalities","Home & Practicalities","Independence & Future Needs","Independence & Future Needs"],
 
     // 2.2 — Rate
     s2_2_title: "Rate Each Option Against Your Current Situation",
@@ -261,12 +292,17 @@ const T = {
     },
     prosConsReview: "Your Pros & Cons Notes",
     forTwoTitle: "Side-by-Side: How You and Person 2 Compare",
-    forTwoDesc: "Where your values align and where they differ.",
+    forTwoResultsDesc: "Where your values align and where they differ.",
     agree: "Agree", disagree: "Differ", pros: "Pros", cons: "Cons",
     stayAsIs: "Stay as you are (no changes)",
     exportPdf: "Print / Save as PDF", startOver: "Start Over",
     resultsPart1: "Part 1: Your Situation & Reflections",
     resultsPart1Desc: "A summary of everything you shared about your situation, values, and initial thinking.",
+    printedOn: "Printed on",
+    strongestTie: "Based on your priorities, these options are tied as your strongest:",
+    tieNote: "A tie means these options are equally strong on the factors that matter most to you. The breakdown below shows where they differ.",
+    permissionNote: "You noted that the owner has not given permission for modifications (yet). Any option that involves changing this home depends on the owner agreeing.",
+    optionN: "Option",
     resultsPart2: "Part 2: Structured Comparison (Pugh Analysis)",
     resultsPart2Desc: "How your options scored when weighted against what matters most to you.",
     resultsScoringLead: "Every option is measured against staying in your current home with no changes.",
@@ -346,7 +382,7 @@ const T = {
     intentionQ: "Combien de temps comptez-vous vivre dans ce domicile?",
     intentions: ["Moins d'un an", "1 à 5 ans", "Plus de 5 ans", "Le plus longtemps possible", "Pas sûr(e)"],
     ownerPermQ: "Si vous êtes locataire, le propriétaire a-t-il donné la permission pour des modifications?",
-    ownerPerms: ["Oui", "Non", "Pas encore demandé", "Sans objet — je suis propriétaire"],
+    ownerPerms: ["Oui", "Non", "Demandé — en attente d'une réponse", "Pas encore demandé", "Sans objet — je suis propriétaire"],
 
     s1_3_title: "Qui d'autre est impliqué dans cette décision?",
     s1_3_purpose: "Les décisions de logement touchent souvent d'autres personnes.",
@@ -361,8 +397,8 @@ const T = {
 
     s1_4_title: "Qu'est-ce qui compte le plus pour vous?",
     s1_4_purpose: "Évaluez chaque élément de 0 (pas important) à 5 (extrêmement important).",
-    catConnections: "Relations et liens", catMoney: "Argent et sécurité", catHome: "Maison et quotidien", catFuture: "Indépendance et avenir",
-    values: ["Rester proche des gens importants", "Garder ma vie sociale", "Accès aux services (médecin, pharmacie, transport)", "Coûts de logement gérables", "Valeur financière de ma maison", "Gérer ma maison de façon autonome", "Me sentir en sécurité chez moi", "Un chez-moi dont je suis fier/fière", "Éviter le stress d'un changement majeur", "Prendre mes propres décisions", "Un logement qui fonctionnera si mes besoins changent", "Liens culturels ou spirituels avec ma communauté"],
+    catConnections: "Relations et liens", catMoney: "Argent et sécurité", catHome: "Maison et aspects pratiques", catFuture: "Indépendance et besoins futurs",
+    values: ["Rester proche de ma famille", "Rester proche de mes amis et garder ma vie sociale", "Accès facile aux commerces et services dont j'ai besoin (médecin, pharmacie, transport)", "Garder mes liens culturels ou spirituels avec ma communauté", "Garder mes coûts hebdomadaires et mensuels gérables", "Protéger l'avoir propre et la valeur financière de ma maison", "Un chez-moi dont je suis fier/fière et où je suis à l'aise", "Avoir accès à du soutien financier", "Éviter le stress et les difficultés d'un changement majeur", "Pouvoir gérer le ménage et les réparations", "Garder le contrôle sur ma façon de vivre au quotidien", "Un logement qui fonctionnera encore si mes besoins changent"],
 
     s1_5_title: "Avez-vous ce qu'il faut pour décider?",
     s1_5_purpose: "Quatre questions adaptées du test SURE. Il n'y a pas de mauvaises réponses.",
@@ -396,8 +432,8 @@ const T = {
 
     s2_1_title: "Importance de chaque facteur", s2_1_purpose: "Curseurs pré-réglés selon vos valeurs. Ajustez si nécessaire.",
     notImp: "0", veryImp: "10",
-    factors: ["Proximité des amis", "Proximité de la famille", "Accès aux services", "Coût de la vie", "Valeur financière", "Stress du changement", "Facilité d'entretien", "Fierté et confort", "Contrôle quotidien", "Adéquation future", "Liens culturels", "Soutien financier"],
-    factorCats: ["Relations","Relations","Relations","Argent","Argent","Maison","Maison","Maison","Avenir","Avenir","Avenir","Financement"],
+    factors: ["Proximité de la famille", "Proximité des amis", "Accès aux commerces et services", "Liens culturels", "Coût de la vie", "Valeur financière", "Fierté et confort", "Soutien financier", "Stress du changement", "Ménage et réparations", "Contrôle quotidien", "Adéquation future"],
+    factorCats: ["Relations","Relations","Relations","Relations","Argent","Argent","Argent","Argent","Maison","Maison","Indépendance","Indépendance"],
 
     s2_2_title: "Évaluez chaque option",
     ratingInstruction: "Vous évaluez :", ratingCompare: "Pour chaque facteur ci-dessous, cette option serait-elle meilleure ou pire que de rester dans votre logement actuel sans aucun changement ?",
@@ -431,12 +467,17 @@ const T = {
       fgrant: "Programmes de subventions fédéraux",
       other: "Autres programmes",
     },
-    prosConsReview: "Vos notes", forTwoTitle: "Côte à côte", forTwoDesc: "Alignement et différences.",
+    prosConsReview: "Vos notes", forTwoTitle: "Côte à côte", forTwoResultsDesc: "Alignement et différences.",
     agree: "D'accord", disagree: "Différent", pros: "Pour", cons: "Contre",
     stayAsIs: "Rester (sans changement)",
     exportPdf: "Imprimer / PDF", startOver: "Recommencer",
     resultsPart1: "Partie 1 : Votre situation et réflexions",
     resultsPart1Desc: "Un résumé de tout ce que vous avez partagé sur votre situation, vos valeurs et vos réflexions initiales.",
+    printedOn: "Imprimé le",
+    strongestTie: "Selon vos priorités, ces options sont à égalité comme meilleures options :",
+    tieNote: "Une égalité signifie que ces options sont aussi fortes l'une que l'autre selon ce qui compte le plus pour vous. Le détail ci-dessous montre où elles diffèrent.",
+    permissionNote: "Vous avez indiqué que le propriétaire n'a pas (encore) donné la permission pour des modifications. Toute option qui consiste à modifier ce logement dépend de son accord.",
+    optionN: "Option",
     resultsPart2: "Partie 2 : Comparaison structurée (analyse Pugh)",
     resultsPart2Desc: "Comment vos options se sont classées selon ce qui compte le plus pour vous.",
     resultsScoringLead: "Chaque option est comparée au fait de rester dans votre logement actuel sans aucun changement.",
@@ -466,6 +507,77 @@ const FUNDING = {
   NU: [{s:"gds",p:"Income Assistance Program (Disability Support)",a:"$175 per month",t:"Ongoing Income Benefit",u:"https://www.gov.nu.ca/en/social-supports/income-assistance-program"},{s:"terr",p:"Home Renovation Program (HRP) - Nunavut Housing Corporation (NHC)",a:"Varies by household - up to $100,000",t:"Forgivable Loan",u:"https://www.nunavuthousing.ca/programs/homeownership"},{s:"terr",p:"Emergency Repair Program (ERP) - Nunavut Housing Corporation",a:"Varies by household - up to $15,000",t:"Grant",u:"https://www.nunavuthousing.ca/programs/homeownership"},{s:"terr",p:"Elders Housing Program (EHP) - Nunavut Housing Corporation",a:"Varies by household - up to $5,000 (maintenance) and $30,000 (repairs)",t:"Grant",u:"https://www.nunavuthousing.ca/programs/homeownership"}],
 };
 const FUNDING_CA = [{s:"npo",p:"Neil Squire Society",a:"Varies",t:"Equipment or Device Support",u:"https://www.neilsquire.ca/individual-programs-services/makers-making-change/"},{s:"npo",p:"Lions of Canada Clubs - Lions Clubs International",a:"Varies",t:"Grant",u:"https://www.lionsclubs.org/en"},{s:"npo",p:"Rotary Club",a:"Varies",t:"Grant",u:"https://www.rotary.org/en"},{s:"npo",p:"Tetra Society of North America",a:"Free to low cost",t:"Equipment or Device Support",u:"https://tetrasociety.org/chapters/"},{s:"npo",p:"Kinsmen Foundation",a:"Up to $10,000 (varies)",t:"Grant",u:"https://www.kincanada.ca/"},{s:"npo",p:"Canadian Red Cross Health Equipment Loan Program (HELP)",a:"Free to low cost",t:"Equipment or Device Support",u:"https://www.redcross.ca/how-we-help/community-health-services-in-canada/health-equipment-loan-program"},{s:"npo",p:"Easter Seals",a:"Varies",t:"Grant",u:"https://www.easterseals.org/"},{s:"cond",p:"Spinal Cord Injury Canada",a:"Varies",t:"Services and Equipment or Device Support",u:"https://sci-can.ca/network"},{s:"cond",p:"MS (Multiple Sclerosis) Canada - Quality of Life Equipment Program",a:"Up to $1,000 funding",t:"Grant",u:"https://mscanada.ca/quality-of-life-equipment-program"},{s:"cond",p:"ALS Canada Equipment Program",a:"Free to low cost",t:"Equipment or Device Support",u:"https://als.ca/get-support/get-equipment/"},{s:"cond",p:"Muscular Dystrophy Canada",a:"Funding for equipment over $200",t:"Grant",u:"https://muscle.ca/support-services/how-we-help/equipment-program/"},{s:"cond",p:"Spina Bifida and Hydrocephalus Association of Canada",a:"Varies",t:"",u:"https://sbhac.ca/"},{s:"ftax",p:"Home Accessibility Tax Credit (HATC)",a:"Approx. $3,000 credit",t:"Non-refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-31285-home-accessibility-expenses.html"},{s:"ftax",p:"Medical Expense Tax Credit (METC)",a:"Varies",t:"Non-refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/lines-33099-33199-eligible-medical-expenses-you-claim-on-your-tax-return.html"},{s:"ftax",p:"Multigenerational Home Renovation Tax Credit (MHRTC)",a:"Up to $7,500 credit",t:"Refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-45355-mhrtc.html"},{s:"fgrant",p:"On-Reserve Residential Rehabilitation Assistance Program (RRAP)",a:"Up to $60,000",t:"Forgivable Loan",u:"https://www.cmhc-schl.gc.ca/professionals/project-funding-and-mortgage-financing/funding-programs/all-funding-programs/residential-rehabilitation-assistance-program?ap=a1-p1"},{s:"fgrant",p:"Veterans Affairs Canada (VAC)",a:"Varies",t:"Grant",u:"https://www.veterans.gc.ca/en/financial-programs-and-services"},{s:"fgrant",p:"First Nations and Inuit Home and Community Care (FNIHCC) Program",a:"Varies",t:"Services",u:"https://www.sac-isc.gc.ca/eng/1582550638699/1582550666787"},{s:"ins",p:"Workplace Insurance Organizations - Workers' Compensation Boards (WCBs)",a:"Pays 85%-90% of net earnings (varies by province/territory)",t:"Insurance Benefit",u:"https://www.ccohs.ca/oshanswers/information/wcb_canada.html"},{s:"ins",p:"Disability Tax Credit (DTC) - Canada Revenue Agency (Government of Canada)",a:"Approx. $1,448 federal credit",t:"Non-refundable Tax Credit",u:"https://www.canada.ca/en/revenue-agency/services/tax/individuals/segments/tax-credits-deductions-persons-disabilities.html"},{s:"ins",p:"The Canada Disability Benefit",a:"Up to a maximum of $204.20 monthly",t:"Ongoing Income Benefit",u:"https://www.canada.ca/en/services/benefits/disability/canada-disability-benefit.html"}];
+
+
+/* French text for funding amounts and program types (FUNDING a: and t: fields).
+   Keys must match the English text exactly; anything missing falls back to English. */
+const FUNDING_FR = {
+  "Varies by household - up to $11,872 per month (for catastrophic injuries requiring 24/7 care)": "Varie selon le ménage — jusqu'à 11 872 $ par mois (blessures catastrophiques nécessitant des soins 24/7)",
+  "Varies by household - up to $1,483.50 per month + health benefits": "Varie selon le ménage — jusqu'à 1 483,50 $ par mois + prestations de santé",
+  "Varies by household - up to $20,000": "Varie selon le ménage — jusqu'à 20 000 $",
+  "Varies by household - up to $1,000 (10% of $10,000 expenses)": "Varie selon le ménage — jusqu'à 1 000 $ (10 % de 10 000 $ de dépenses)",
+  "Varies": "Variable",
+  "Varies by household - up to $1,940 per month": "Varie selon le ménage — jusqu'à 1 940 $ par mois",
+  "Varies by household - up to $40,000 (loan)": "Varie selon le ménage — jusqu'à 40 000 $ (prêt)",
+  "Varies by household - up to $12,000 per year (max $24,000/10 years)": "Varie selon le ménage — jusqu'à 12 000 $ par année (maximum de 24 000 $ par période de 10 ans)",
+  "Varies (equipment-based funding; up to $500 annual client contribution cap)": "Variable (financement selon l'équipement; contribution annuelle du client plafonnée à 500 $)",
+  "Up to $5,000": "Jusqu'à 5 000 $",
+  "Covered under public healthcare (AHCIP)": "Couvert par le régime public d'assurance maladie (AHCIP)",
+  "90% of net income up to a maximum salary of $119,692": "90 % du revenu net, jusqu'à un salaire maximal de 119 692 $",
+  "Varies by household -up to $23,000": "Varie selon le ménage — jusqu'à 23 000 $",
+  "Varies (equipment-based coverage)": "Variable (couverture selon l'équipement)",
+  "Varies (can exceed $50,000 depending on need)": "Variable (peut dépasser 50 000 $ selon les besoins)",
+  "Varies by household -up to $15,000 (for South/Central citizens) and $18,000 (for Northern citizens)": "Varie selon le ménage — jusqu'à 15 000 $ (résidents du Sud et du Centre) et 18 000 $ (résidents du Nord)",
+  "Varies - 90% of net income (maximum insurable income $123,000, effective April 1, 2026)": "Variable — 90 % du revenu net (revenu assurable maximal de 123 000 $ à compter du 1er avril 2026)",
+  "Varies by household": "Varie selon le ménage",
+  "Matched savings (varies)": "Épargne jumelée (variable)",
+  "Up to $5,000 (non-rural) or $6,500 (rural/remote)": "Jusqu'à 5 000 $ (milieu non rural) ou 6 500 $ (milieu rural ou éloigné)",
+  "Varies by household - up to $15,000 (home modifications)": "Varie selon le ménage — jusqu'à 15 000 $ (modifications domiciliaires)",
+  "Varies by household - up to $1,436 per month": "Varie selon le ménage — jusqu'à 1 436 $ par mois",
+  "Up to $60,000": "Jusqu'à 60 000 $",
+  "Varies by location": "Varie selon l'endroit",
+  "Covers 75% of approved price": "Couvre 75 % du prix approuvé",
+  "Covers 75%-100% assistive devices": "Couvre de 75 % à 100 % des aides techniques",
+  "Varies by household -up to $1,745 per week": "Varie selon le ménage — jusqu'à 1 745 $ par semaine",
+  "Varies by household - up to $1,336 per month ($16,032 per year)": "Varie selon le ménage — jusqu'à 1 336 $ par mois (16 032 $ par année)",
+  "20% of eligible expenses (after first $250)": "20 % des dépenses admissibles (après les premiers 250 $)",
+  "Varies by household - up to $10,000": "Varie selon le ménage — jusqu'à 10 000 $",
+  "Varies by household - up to $30,000": "Varie selon le ménage — jusqu'à 30 000 $",
+  "Varies by household - up to $1,000 per year (10% of $10,000 expenses)": "Varie selon le ménage — jusqu'à 1 000 $ par année (10 % de 10 000 $ de dépenses)",
+  "Varies by household - up to $18,000": "Varie selon le ménage — jusqu'à 18 000 $",
+  "Varies by household -up to $16,000": "Varie selon le ménage — jusqu'à 16 000 $",
+  "Varies by household - up to $400 per month ($4,800 annually) for those eligible": "Varie selon le ménage — jusqu'à 400 $ par mois (4 800 $ par année) pour les personnes admissibles",
+  "Varies by household - up to $7,500": "Varie selon le ménage — jusqu'à 7 500 $",
+  "$250 per month": "250 $ par mois",
+  "Up to $15,000 per year": "Jusqu'à 15 000 $ par année",
+  "Varies by household - up to $50,000": "Varie selon le ménage — jusqu'à 50 000 $",
+  "$175 per month": "175 $ par mois",
+  "Varies by household - up to $100,000": "Varie selon le ménage — jusqu'à 100 000 $",
+  "Varies by household - up to $15,000": "Varie selon le ménage — jusqu'à 15 000 $",
+  "Varies by household - up to $5,000 (maintenance) and $30,000 (repairs)": "Varie selon le ménage — jusqu'à 5 000 $ (entretien) et 30 000 $ (réparations)",
+  "Free to low cost": "Gratuit ou à faible coût",
+  "Up to $10,000 (varies)": "Jusqu'à 10 000 $ (variable)",
+  "Up to $1,000 funding": "Jusqu'à 1 000 $ de financement",
+  "Funding for equipment over $200": "Financement pour l'équipement de plus de 200 $",
+  "Approx. $3,000 credit": "Crédit d'environ 3 000 $",
+  "Up to $7,500 credit": "Crédit pouvant atteindre 7 500 $",
+  "Pays 85%-90% of net earnings (varies by province/territory)": "Verse de 85 % à 90 % de la rémunération nette (varie selon la province ou le territoire)",
+  "Approx. $1,448 federal credit": "Crédit fédéral d'environ 1 448 $",
+  "Up to a maximum of $204.20 monthly": "Jusqu'à un maximum de 204,20 $ par mois",
+  "Insurance Benefit": "Prestation d'assurance",
+  "Ongoing Income Benefit": "Prestation de revenu continue",
+  "Grant": "Subvention",
+  "Refundable Tax Credit": "Crédit d'impôt remboursable",
+  "Grant & Loan": "Subvention et prêt",
+  "Equipment or Device Support": "Soutien pour l'équipement ou les appareils",
+  "Forgivable Loan": "Prêt-subvention",
+  "Services": "Services",
+  "Services & Ongoing Income Benefit": "Services et prestation de revenu continue",
+  "Grant & Forgivable Loan": "Subvention et prêt-subvention",
+  "Ongoing Income Benefit & Services": "Prestation de revenu continue et services",
+  "Services and Equipment or Device Support": "Services et soutien pour l'équipement ou les appareils",
+  "Non-refundable Tax Credit": "Crédit d'impôt non remboursable"
+};
 
 const PK = ["BC","AB","SK","MB","ON","QC","NB","NS","PE","NL","YT","NT","NU"];
 
@@ -538,6 +650,8 @@ function App() {
   const scoreRangeMax = useMemo(() => derivedWeights.reduce((a,b)=>a+b,0) * 2, [derivedWeights]);
   const bestIdx = useMemo(()=>{ let b=0; scores.forEach((s,i)=>{if(s>scores[b])b=i;}); return scores.length&&scores[b]>0?b:-1; },[scores]);
   const maxAbs = useMemo(()=>Math.max(1,...scores.map(Math.abs)),[scores]);
+  /* All options that share the top score (only when it is above 0). More than one = a tie. */
+  const topIdxs = useMemo(()=> bestIdx < 0 ? [] : scores.map((s,i)=>s===scores[bestIdx]?i:-1).filter(i=>i>=0), [scores,bestIdx]);
   const topValues = useMemo(()=>vals.map((v,i)=>({v,i})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0).slice(0,5),[vals]);
   const sureYes = sure.filter(v=>v===true).length;
 
@@ -730,7 +844,7 @@ function App() {
   </div>);
 
   // 4 — Values
-  const catR=[[0,3],[3,5],[5,9],[9,12]];
+  const catR=[[0,4],[4,8],[8,10],[10,12]];
   const catN=[t.catConnections,t.catMoney,t.catHome,t.catFuture];
   const S1_4=()=>{const src=activePerson===2?p2Vals:vals;const setSrc=activePerson===2?setP2Vals:setVals;const upd=(i,v)=>{const n=[...src];n[i]=Number(v);setSrc(n);};return(<div><h2 style={sH1}>{t.s1_4_title}</h2><p style={sPurpose}>{t.s1_4_purpose}</p><PersonTabs/>{catN.map((cat,ci)=>(<div key={ci} style={sCard}><CatHeader label={cat}/>{t.values.slice(catR[ci][0],catR[ci][1]).map((v,vi)=>{const idx=catR[ci][0]+vi;return(<div key={idx} style={{marginBottom:22}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:15}}>{v}</span><span style={{fontWeight:700,color:C.tealDark,fontSize:20,minWidth:28,textAlign:"right"}}>{src[idx]}</span></div><input type="range" min="0" max="5" value={src[idx]} onChange={e=>upd(idx,e.target.value)} style={sSlider}/><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:11,color:C.textLight}}>{t.notImportant}</span><span style={{fontSize:11,color:C.textLight}}>{t.veryImportant}</span></div></div>);})}</div>))}<Nav canNext={vals.some(v=>v>0)&&(!forTwo||p2Vals.some(v=>v>0))} nextHint={forTwo?t.navNeedValuesBoth:t.navNeedValues}/></div>);};
 
@@ -1009,6 +1123,7 @@ function App() {
   /* Funding preview — one block per category, program names link out to the
      administering organization. No hooks: S2_4 is invoked imperatively. */
   const FundingGroup = ({heading, items, compact}) => {
+    const tr = str => (lang === "fr" && FUNDING_FR[str]) || str;
     const order = ["prov","terr","city","gds","ins","npo","cond","ftax","fgrant","other"];
     const seen = order.filter(k => items.some(p => p.s === k));
     return (
@@ -1021,15 +1136,15 @@ function App() {
               compact ? (
                 <p key={n} style={{fontSize: 14, lineHeight: 1.45, marginBottom: 5, paddingLeft: 12, borderLeft: `3px solid ${C.borderLight}`}}>
                   <span style={{fontWeight: 600}}>{p.u ? <a href={p.u} target="_blank" rel="noopener noreferrer" style={{color: C.tealDark, textDecoration: "underline"}}>{p.p}</a> : p.p}</span>
-                  {p.t && <span style={{color: C.textLight, fontSize: 13}}>{" \u2014 "}{p.t}</span>}
+                  {p.t && <span style={{color: C.textLight, fontSize: 13}}>{" \u2014 "}{tr(p.t)}</span>}
                 </p>
               ) : (
                 <div key={n} style={{borderLeft: `3px solid ${C.borderLight}`, paddingLeft: 12, marginBottom: 10}}>
                   <p style={{fontSize: 14, fontWeight: 600, lineHeight: 1.4}}>
                     {p.u ? <a href={p.u} target="_blank" rel="noopener noreferrer" style={{color: C.tealDark, textDecoration: "underline"}}>{p.p}</a> : p.p}
                   </p>
-                  <p style={{fontSize: 13, color: C.text, lineHeight: 1.45, marginTop: 2}}>{p.a}</p>
-                  {p.t && <p style={{fontSize: 12, color: C.textLight, marginTop: 2}}>{p.t}</p>}
+                  <p style={{fontSize: 13, color: C.text, lineHeight: 1.45, marginTop: 2}}>{tr(p.a)}</p>
+                  {p.t && <p style={{fontSize: 12, color: C.textLight, marginTop: 2}}>{tr(p.t)}</p>}
                 </div>
               )
             ))}
@@ -1046,8 +1161,12 @@ function App() {
     const ri = sureYes >= 4 ? 2 : sureYes >= 2 ? 1 : 0;
     const sSection = {fontSize: 20, fontWeight: 700, color: C.tealDark, marginBottom: 4, marginTop: 36};
     const sSectionDesc = {fontSize: 14, color: C.textMid, marginBottom: 10, lineHeight: 1.5};
+    const printDate = new Date().toLocaleDateString(lang === "en" ? "en-CA" : "fr-CA", {year: "numeric", month: "long", day: "numeric"});
     return (
-      <div>
+      <div id="results">
+        <p className="print-only" style={{fontSize: 12, fontWeight: 700, color: C.tealDark, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4}}>
+          {t.title} {"\u2014"} {t.subtitle} {"\u00B7"} {t.printedOn} {printDate}
+        </p>
         <h2 style={sH1}>{t.s2_4_title}</h2>
 
         <div style={{...sCard, background: C.goldLight, borderLeft: `4px solid ${C.gold}`, fontSize: 13, color: C.textMid}}>
@@ -1055,8 +1174,8 @@ function App() {
         </div>
 
         {/* ═══ PART 1: Qualitative / Self-Report Summary ═══ */}
-        <div style={{...sSection, marginTop: 24, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart1}</div>
-        <p style={sSectionDesc}>{t.resultsPart1Desc}</p>
+        <div className="print-keep-next" style={{...sSection, marginTop: 24, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart1}</div>
+        <p className="print-keep-next" style={sSectionDesc}>{t.resultsPart1Desc}</p>
 
         <div className="print-no-break" style={{...sCard, marginBottom: 8, padding: "14px 18px"}}>
           <SRow label={t.summaryOptions} value={validOpts.map((o, i) => `${i + 1}. ${o}`).join("\n") || "\u2014"} />
@@ -1093,8 +1212,8 @@ function App() {
         </div>
 
         {/* ═══ PART 2: Pugh Structured Comparison ═══ */}
-        <div className="print-page-break" style={{...sSection, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart2}</div>
-        <div style={{background: C.tealLight, borderLeft: `4px solid ${C.tealDark}`, borderRadius: 8, padding: "14px 18px", marginBottom: 16}}>
+        <div className="print-page-break print-keep-next" style={{...sSection, marginTop: 0, borderBottom: `3px solid ${C.teal}`, paddingBottom: 8}}>{t.resultsPart2}</div>
+        <div className="print-legend" style={{background: C.tealLight, borderLeft: `4px solid ${C.tealDark}`, borderRadius: 8, padding: "14px 18px", marginBottom: 16}}>
           <p style={{fontSize: 15, fontWeight: 600, color: C.text, lineHeight: 1.55, marginBottom: 12}}>{t.resultsScoringLead}</p>
           {t.resultsLegend.map(([sym, label, desc], li) => (
             <div key={li} style={{display: "flex", gap: 10, alignItems: "flex-start", marginBottom: li < 2 ? 8 : 0}}>
@@ -1108,17 +1227,26 @@ function App() {
         </div>
 
         {bestIdx >= 0 && (
-          <div className="print-no-break" style={{...sCard, background: C.posLight, borderLeft: `4px solid ${C.pos}`, textAlign: "center", padding: 32}}>
-            <p style={{fontSize: 14, color: C.textLight, marginBottom: 4}}>{t.strongest}</p>
-            <p style={{fontSize: 28, fontWeight: 700, color: C.pos, marginBottom: 4}}>{validOpts[bestIdx]}</p>
-            <p style={{fontSize: 36, fontWeight: 800, color: scoreColor(scores[bestIdx] || 0)}}>{scoreLabel(scores[bestIdx] || 0)}</p>
+          <div className="print-no-break print-compact" style={{...sCard, background: C.posLight, borderLeft: `4px solid ${C.pos}`, textAlign: "center", padding: 32}}>
+            <p style={{fontSize: 14, color: C.textLight, marginBottom: 4}}>{topIdxs.length > 1 ? t.strongestTie : t.strongest}</p>
+            {topIdxs.map(i => (
+              <p key={i} className="print-strong-name" style={{fontSize: topIdxs.length > 1 ? 22 : 28, fontWeight: 700, color: C.pos, marginBottom: 4}}>{validOpts[i]}</p>
+            ))}
+            <p className="print-strong-score" style={{fontSize: 36, fontWeight: 800, color: scoreColor(scores[bestIdx] || 0)}}>{scoreLabel(scores[bestIdx] || 0)}</p>
+            {topIdxs.length > 1 && <p style={{fontSize: 13, color: C.textMid, lineHeight: 1.5, marginTop: 6}}>{t.tieNote}</p>}
+          </div>
+        )}
+
+        {tenure !== null && tenure !== 0 && tenure !== 4 && ownerPerm !== null && ownerPerm >= 1 && ownerPerm <= 3 && (
+          <div className="print-no-break print-compact-note" style={{...sCard, background: C.goldLight, borderLeft: `4px solid ${C.gold}`, fontSize: 14, color: C.text, lineHeight: 1.5}}>
+            {"\u26A0\uFE0F "}{t.permissionNote}
           </div>
         )}
 
         <div className="print-hide" style={sCard}>
           <p style={{fontWeight: 700, fontSize: 18, marginBottom: 18}}>{t.scoreSummary}</p>
           <div style={{marginBottom: 12, display: "flex", alignItems: "center", gap: 10}}>
-            <span style={{minWidth: 130, fontSize: 13, textAlign: "right", color: C.textLight}}>{t.baseline}</span>
+            <span style={{width: 180, flexShrink: 0, fontSize: 13, textAlign: "right", color: C.textLight}}>{t.baseline}</span>
             <div style={{flex: 1, height: 2, background: C.border}} />
             <span style={{fontWeight: 700, color: C.textLight, minWidth: 36}}>0</span>
           </div>
@@ -1127,8 +1255,8 @@ function App() {
             const bw = Math.abs(s) / maxAbs * maxBar;
             return (
               <div key={i} style={{display: "flex", alignItems: "center", gap: 10, marginBottom: 10}}>
-                <span style={{minWidth: 130, fontSize: 13, textAlign: "right", fontWeight: i === bestIdx ? 700 : 400}}>
-                  {opt.length > 22 ? opt.slice(0, 22) + "\u2026" : opt}
+                <span style={{width: 180, flexShrink: 0, fontSize: 13, lineHeight: 1.3, textAlign: "right", fontWeight: topIdxs.includes(i) ? 700 : 400}}>
+                  {opt}
                 </span>
                 <div style={{flex: 1, display: "flex", alignItems: "center", justifyContent: s >= 0 ? "flex-start" : "flex-end", height: 22}}>
                   <div style={{width: bw, height: 18, background: scoreColor(s), borderRadius: 4, transition: "width 0.5s", minWidth: s !== 0 ? 4 : 0}} />
@@ -1141,8 +1269,11 @@ function App() {
           })}
         </div>
 
-        <div className="print-no-break" style={sCard}>
+        <div className="print-no-break print-compact" style={sCard}>
           <p style={{fontWeight: 700, fontSize: 18, marginBottom: 14}}>{t.factorBreakdown}</p>
+          <div className="print-only" style={{fontSize: 12, color: C.text, lineHeight: 1.5, marginBottom: 8}}>
+            {validOpts.map((o, i) => <div key={i}><strong>{t.optionN} {i + 1}:</strong> {o}</div>)}
+          </div>
           <div style={{overflowX: "auto"}}>
             <table style={{width: "100%", borderCollapse: "collapse", fontSize: 13}}>
               <thead>
@@ -1151,7 +1282,8 @@ function App() {
                   <th style={{padding: "8px 4px", textAlign: "center", width: 80}}>{t.weight}</th>
                   {validOpts.map((o, i) => (
                     <th key={i} style={{padding: "8px 4px", textAlign: "center"}}>
-                      {o}
+                      <span className="screen-only">{o}</span>
+                      <span className="print-only-inline">{t.optionN} {i + 1}</span>
                     </th>
                   ))}
                 </tr>
@@ -1188,19 +1320,10 @@ function App() {
           </div>
         </div>
 
-        {funding && (
-          <div className="print-page-break" style={sCard}>
-            <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.fundingPreview}</p>
-            <p style={{fontSize: 13, color: C.textLight, marginBottom: 16}}>{t.fundingPreviewDesc}</p>
-            <FundingGroup heading={`${t.fundingRegional} ${t.provinceFull[PK.indexOf(province)]}`} items={funding} />
-            <FundingGroup heading={t.fundingNational} items={FUNDING_CA} compact />
-          </div>
-        )}
-
         {forTwo && (
           <div className="print-no-break" style={sCard}>
             <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.forTwoTitle}</p>
-            <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.forTwoDesc}</p>
+            <p style={{fontSize: 13, color: C.textLight, marginBottom: 14}}>{t.forTwoResultsDesc}</p>
             <table style={{width: "100%", borderCollapse: "collapse", fontSize: 13}}>
               <thead>
                 <tr style={{borderBottom: `2px solid ${C.border}`}}>
@@ -1231,6 +1354,15 @@ function App() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {funding && (
+          <div className="print-page-break" style={sCard}>
+            <p style={{fontWeight: 700, fontSize: 18, marginBottom: 4}}>{t.fundingPreview}</p>
+            <p style={{fontSize: 13, color: C.textLight, marginBottom: 16}}>{t.fundingPreviewDesc}</p>
+            <FundingGroup heading={`${t.fundingRegional} ${t.provinceFull[PK.indexOf(province)]}`} items={funding} />
+            <FundingGroup heading={t.fundingNational} items={FUNDING_CA} compact />
           </div>
         )}
 
